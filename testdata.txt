@@ -1,0 +1,5 @@
+connection=whoopitypoopscoop
+database=paulsdatabase
+collections=paulsshoelaceconnection
+access=tradingblock
+secret=Tradingblock1234!
