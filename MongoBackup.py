@@ -47,6 +47,12 @@ class MongoBackup:
         #print('\ndatabase:', self.database)
         # print total number of documents in a mongo collection
         
+    def create_folder(self):
+        d = datetime.datetime.now().strftime('%m:%d:%Y')
+        path = os.getcwd()
+        path = path + "/" + d + "_backup"
+        self.backup_folder_path = path
+        os.mkdir(self.backup_folder_path)
 
     def export_csv(self):
         pass
@@ -54,6 +60,7 @@ class MongoBackup:
         pass
     def export_json(self):
         pass
+
     def backup(self):
         #print("\nin backup()")
         collection = self.database[str(self.collections[0]).strip()]
@@ -63,23 +70,22 @@ class MongoBackup:
         docs = pandas.DataFrame(columns=[])
 
         for num, doc in enumerate(mongo_docs):
-            
             # Convert ObjectId() to str
             doc["_id"] = str(doc["_id"])
             # get document _id from dict
             doc_id = doc["_id"]
             # create a Series obj from the MongoDB dict
-            series_obj = pandas.Series(doc, name=doc_id).str.encode('utf-8')
+            series_obj = pandas.Series(doc, name=doc_id)
 
             # append the MongoDB obj to the DataFrame obj
-            docs = docs.append(series_obj)
-        docs = docs
-        name = str(datetime.datetime.now().strftime("%m:%d:%Y::%H:%M:%S")) + str(self.collections[0].strip()) + ".json"
-
+            docs = docs.append(series_obj)#.str.encode('utf-8'))
+        
+        name = str(datetime.datetime.now().strftime("%m:%d:%Y::%H:%M:%S")) + "_" + str(self.collections[0].strip()) + ".json"
+        self.create_folder()
         open(name, "w+").close()
 
-        json_export = docs.to_json(name)
-        print("\nJSON data:", json_export)
+        docs.to_json(name, orient='table', default_handler=str)
+        print("Database successfully exported to JSON")
 # End class
 
 def call(command, silent=False):
@@ -183,6 +189,7 @@ def file_parse(file) -> None:
             elif arg in mongo_user_variants:
                 #print("user: ", val)
                 mongo_user = val
+    
     mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, conn_string, db )
     fp.close()
     backup_mongo(mongo) 
@@ -211,6 +218,8 @@ def main():
     except getopt.error as err:
         print(str(err))
         sys.exit(2)
+    print('starting backup process...')
+
 
     # Declare variables for use later
     connection_string = None
@@ -250,6 +259,7 @@ def main():
     if file is None:
         backup_mongo(mongo)
     else:
+        print('\nFile input detected. Parsing...')
         file_parse(file)
     
 # End main
