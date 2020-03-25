@@ -17,10 +17,18 @@ from minio.error import (ResponseError, BucketAlreadyOwnedByYou, BucketAlreadyEx
 import argparse
 import sys
 import getopt
+import pymongo
+from os import path, listdir, makedirs, devnull
 import subprocess
+import json
+import os
+from shlex import split as command_to_array
+from subprocess import CalledProcessError, check_call
 
 class MongoBackup:
-    def __init__(self, host, user, password, port, access_key, secret_key, cols, connection_string) -> None:
+    def __init__(self, host, user, password, port, access_key, secret_key, cols, connection_string, database_name) -> None:
+        #client = pymongo.MongoClient("mongodb+srv://<username>:<password>@cluster0-puhkc.mongodb.net/test?retryWrites=true&w=majority")
+        #db = client.test
         self.host = host
         self.password = password
         self.port = port
@@ -29,10 +37,41 @@ class MongoBackup:
         self.collections = cols
         self.secret_key = secret_key
         self.access_key = access_key
+        self.database_name = database_name
+    def export_csv(self):
+        pass
+    def export_minio(self):
+        pass
+    def export_json(self):
+        pass
+
 # End class
 
+def call(command, silent=False):
+    """ Runs a bash command safely, with shell=false, catches any non-zero
+        return codes. Raises slightly modified CalledProcessError exceptions
+        on failures. 
+        Note: command is a string and cannot include pipes. """
+    try:
+        if silent:
+            with open(os.devnull, 'w') as FNULL:
+                return subprocess.check_call(command_to_array(command), stdout=FNULL)
+        else:
+            # Using the defaults, shell=False, no i/o redirection.
+            return check_call(command_to_array(command))
+    except CalledProcessError as e:
+        # We are modifying the erro itself for 2 reasons.
+        #   1) it WILL contain login credentials
+        #   2) CalledProcessError is slightly not to spec
+        #   (the message variable is blank), which means
+        #   cronutils.ErrorHandler would report unlabeled stack traces.
+        e.message = "%s failed with error code %s" % (e.cmd[0], e.returncode)
+        e.cmd = e.cmd[0] + " [arguments stripped for security]"
+        raise e
+
 def run_docker(mongo: MongoBackup):
-    process = subprocess.Popen(["docker", "run", "-d", f'--env MONGODB_HOST={mongo.host}', f"--env MONGODB_PORT={mongo.port}", f"--env MONGODB_USER={mongo.user}", f"--env MONGODB_PASS={mongo.password}", "--volume host.folder:/backup", "tutum/mongodb-backup"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print("Inside run_docker")
+    process = call(["docker", "run", "-d", f'--env MONGODB_HOST={mongo.host}', f"--env MONGODB_PORT={mongo.port}", f"--env MONGODB_USER={mongo.user}", f"--env MONGODB_PASS={mongo.password}", "--volume host.folder:/backup", "tutum/mongodb-backup"])
 # End run_docker
 
 
@@ -58,8 +97,8 @@ def file_parse(file) -> None:
 
     # Allows for different formatting of the 
     # options
-    connection_string_variants = ["connection", "connection_string", "conn"]
-    db_name_variants = ["database", "name", "database_name", "db"]
+    connection_string_variants = ["mongo_connection", "connection_string", "conn", "mongo_connection_string", "MongoConnection"]
+    db_name_variants = ["database", "name", "database_name", "db", "MongoDatabase", "mongo_database", "MongoDB", "MongoDb"]
     collections_variants = ["collections", "collection", "col"]
     access_variants = ["access_key", "access", "accesskey", "accessKey"]
     secret_variants = ["secret", "secret_key", "secretKey"]
@@ -108,7 +147,7 @@ def file_parse(file) -> None:
             elif arg in mongo_user_variants:
                 print("user: ", val)
                 mongo_user = val
-    mongo: MongoBackup = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, col, conn_string )
+    mongo: MongoBackup = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, col, conn_string, db )
     backup_mongo(mongo)
     fp.close()
 # End file_parse
@@ -169,7 +208,7 @@ def main():
             host = curr_val
         elif curr_arg in ("-u", "--user"):
             user = curr_val
-    mongo: MongoBackup = MongoBackup(host, user, password, port, access_key, secret_key, collections, connection_string)
+    mongo: MongoBackup = MongoBackup(host, user, password, port, access_key, secret_key, collections, connection_string, database_name)
 
     if file is None:
         backup_mongo(mongo)
