@@ -2,3 +2,4 @@ MongoConnection=mongodb+srv://paulmorgan:webitects@cluster0-puhkc.mongodb.net/te
 database=Cluster0
 access=tradingblock
 secret=Tradingblock1234!
+port=27017
