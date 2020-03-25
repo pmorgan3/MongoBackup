@@ -41,10 +41,10 @@ class MongoBackup:
         self.secret_key = secret_key
         self.access_key = access_key
         self.client = pymongo.MongoClient(connection_string)
-        self.database = self.client[str(database_name)]
-        self.collections = self.database[str(database_name)].find()
-        print('collections:', self.collections)
-        print('database:', self.database)
+        self.database = self.client[str(database_name).strip()]
+        self.collections = self.database.list_collection_names()
+        #print('\ncollections:', self.collections)
+        #print('\ndatabase:', self.database)
         # print total number of documents in a mongo collection
         
 
@@ -55,27 +55,31 @@ class MongoBackup:
     def export_json(self):
         pass
     def backup(self):
-        print("in backup()")
-        collection = self.collections.collection
-        print('collection:', collection)
-        cursor = collection.find()
-        print('cursor:', cursor)
-        mongo_docs = list(cursor)
-        print('mongo_docs:', mongo_docs)
+        #print("\nin backup()")
+        collection = self.database[str(self.collections[0]).strip()]
+        #print('\ncollection:', collection)
+        mongo_docs = list(collection.find())
+        #print('\nmongo_docs:', mongo_docs)
         docs = pandas.DataFrame(columns=[])
+
         for num, doc in enumerate(mongo_docs):
-            print("in collection loop")
+            
             # Convert ObjectId() to str
             doc["_id"] = str(doc["_id"])
             # get document _id from dict
             doc_id = doc["_id"]
             # create a Series obj from the MongoDB dict
-            series_obj = pandas.Series(doc, name=doc_id)
+            series_obj = pandas.Series(doc, name=doc_id).str.encode('utf-8')
 
             # append the MongoDB obj to the DataFrame obj
             docs = docs.append(series_obj)
-            json_export = docs.to_json(str(datetime.datetime.now) + str(collection) + ".json")
-            print("\nJSON data:", json_export)
+        docs = docs
+        name = str(datetime.datetime.now().strftime("%m:%d:%Y::%H:%M:%S")) + str(self.collections[0].strip()) + ".json"
+
+        open(name, "w+").close()
+
+        json_export = docs.to_json(name)
+        print("\nJSON data:", json_export)
 # End class
 
 def call(command, silent=False):
@@ -106,7 +110,7 @@ def call(command, silent=False):
 # End run_docker
 
 
-def backup_mongo(mongo: MongoBackup):
+def backup_mongo(mongo):
     minioClient = Minio('play.min.io',
                     access_key='Q3AM3UQ867SPQQA43P2F',
                     secret_key='zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG',
@@ -124,7 +128,7 @@ def pairwise(iterable):
 def file_parse(file) -> None:
     """Parses the given file (If applicable) """
 
-    print("in file_parse")
+    #print("in file_parse")
     fp = open(file, 'r')
 
     # Allows for different formatting of the 
@@ -151,35 +155,35 @@ def file_parse(file) -> None:
     for line in fp:
         arg_list = line.split('=', 1)
         for arg, val in pairwise(arg_list):
-            print('arg: ', arg)
+            #print('arg: ', arg)
             if arg in connection_string_variants:
-                print("val: ", val)
+                #print("val: ", val)
                 conn_string = val
             elif arg in db_name_variants:
-                print("val: ", val)
+                #print("val: ", val)
                 db = val
             elif arg in collections_variants:
-                print("val: ", val)
+                #print("val: ", val)
                 col = val
             elif arg in access_variants:
-                print("access key: ", val)
+                #print("access key: ", val)
                 access = val
             elif arg in secret_variants:
-                print("secret key: ", val)
+                #print("secret key: ", val)
                 secret = val
             elif arg in mongo_host_variants:
-                print("host: ", val)
+                #print("host: ", val)
                 mongo_host = val
             elif arg in mongo_pass_variants:
-                print("password: ", val)
+                #print("password: ", val)
                 mongo_pass = val
             elif arg in mongo_port_variants:
-                print("port: ", val)
+                #print("port: ", val)
                 mongo_port = val
             elif arg in mongo_user_variants:
-                print("user: ", val)
+                #print("user: ", val)
                 mongo_user = val
-    mongo: MongoBackup = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, conn_string, db )
+    mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, conn_string, db )
     fp.close()
     backup_mongo(mongo) 
     
@@ -241,7 +245,7 @@ def main():
             host = curr_val
         elif curr_arg in ("-u", "--user"):
             user = curr_val
-    mongo: MongoBackup = MongoBackup(host, user, password, port, access_key, secret_key, connection_string, database_name)
+    mongo = MongoBackup(host, user, password, port, access_key, secret_key, connection_string, database_name)
 
     if file is None:
         backup_mongo(mongo)
