@@ -65,6 +65,7 @@ class MongoBackup:
         except ResponseError as err:
             print(err)
         print("Uploaded zip")
+        print("Backup process complete. Have a nice day :)")
     # End backup_to_minio()
 
     def create_folder(self) -> None:
@@ -172,11 +173,9 @@ def pairwise(iterable):
 def file_parse(file) -> None:
     """Parses the given file (If applicable) """
 
-    #print("in file_parse")
     fp = open(file, 'r')
 
-    # Allows for different formatting of the 
-    # options
+    # Allows for different formatting of the options
     connection_string_variants = ["mongo_connection", "connection_string", "conn", "mongo_connection_string", "MongoConnection"]
     db_name_variants = ["database", "name", "database_name", "db", "MongoDatabase", "mongo_database", "MongoDB", "MongoDb"]
     collections_variants = ["collections", "collection", "col"]
