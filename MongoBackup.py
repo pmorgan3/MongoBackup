@@ -27,6 +27,9 @@ import datetime
 from shlex import split as command_to_array
 from subprocess import CalledProcessError, check_call
 
+# When making a directory we need to change the slash type depending on OS
+slash_type = '\\' if os.name == 'nt' else '/'
+
 class MongoBackup:
     def __init__(self, host, user, password, port, access_key, secret_key,  connection_string, database_name) -> None:
         #client = pymongo.MongoClient("mongodb+srv://<username>:<password>@cluster0-puhkc.mongodb.net/test?retryWrites=true&w=majority")
@@ -46,12 +49,15 @@ class MongoBackup:
         print('\ndatabase:', self.database)
         # print total number of documents in a mongo collection
         
-    def create_folder(self):
+    def create_folder(self) -> None:
         d = datetime.datetime.now().strftime('%m:%d:%Y')
         path = os.getcwd()
-        path = path + "/" + d + "_backup"
+        path = path + slash_type + d + "_backup"
         self.backup_folder_path = path
-        os.mkdir(self.backup_folder_path)
+        try:
+            os.mkdir(self.backup_folder_path)
+        except Exception:
+            pass
 
     def export_csv(self):
         pass
@@ -60,7 +66,7 @@ class MongoBackup:
     def export_json(self):
         pass
 
-    def backup(self):
+    def backup(self) -> None:
         #print("\nin backup()")
         #collection = self.database[str(self.collections[0]).strip()]
         #print('\ncollection:', collection)
@@ -84,9 +90,9 @@ class MongoBackup:
         
             name = str(datetime.datetime.now().strftime("%m:%d:%Y::%H:%M:%S")) + "_" + str(collection.strip()) + ".json"
         
-            open(name, "w+").close()
+            open(os.path.join( self.backup_folder_path, name ), "w+").close()
 
-            docs.to_json(name, orient='table', default_handler=str)
+            docs.to_json(os.path.join(self.backup_folder_path, name), orient='table', default_handler=str)
 
         print("Database successfully exported to JSON")
 # End class
