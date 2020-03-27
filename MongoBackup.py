@@ -44,7 +44,7 @@ class MongoBackup:
         self.client = pymongo.MongoClient(connection_string)
         self.database = self.client[str(database_name).strip()]
         self.collections = self.database.list_collection_names()
-        print('\ncollections:', self.collections)
+        #print('\ncollections:', self.collections)
         # print('\ndatabase:', self.database)
         # print total number of documents in a mongo collection
         
@@ -71,6 +71,7 @@ class MongoBackup:
         #print('\ncollection:', collection)
         
         #print('\nmongo_docs:', mongo_docs)
+        print('\nCollections:', self.collections)
         docs = pandas.DataFrame(columns=[])
         self.create_folder()
         for collection in self.collections:
@@ -86,7 +87,7 @@ class MongoBackup:
 
                 # append the MongoDB obj to the DataFrame obj
                 docs = docs.append(series_obj)#.str.encode('utf-8'))
-            print("\n Backed up", str(collection.strip()))
+            print("Backed up", str(collection.strip()))
             name = str(datetime.datetime.now().strftime("%m:%d:%Y::%H:%M:%S")) + "_" + str(collection.strip()) + ".json"
         
             open(os.path.join( self.backup_folder_path, name ), "w+").close()
