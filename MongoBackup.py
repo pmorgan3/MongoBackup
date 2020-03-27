@@ -41,7 +41,7 @@ class MongoBackup:
         self.access_key = access_key
         self.client = pymongo.MongoClient(connection_string)
         self.database = self.client[str(database_name).strip()]
-        self.collections = self.database.list_collection_names()
+        self.collections = self.database.list_collection_names()  
         self.minio_endpoint = endpoint
     # End __init__()
     
@@ -88,7 +88,7 @@ class MongoBackup:
 
             mongo_docs = list(c.find())
 
-            for num, doc in enumerate(mongo_docs):
+            for doc in c.find():
                 # Convert ObjectId() to str
                 doc["_id"] = str(doc["_id"])
 
@@ -106,7 +106,7 @@ class MongoBackup:
         
             open(os.path.join( self.backup_folder_path, self.backup_name ), "w+").close()
 
-            docs.to_json(os.path.join(self.backup_folder_path, self.backup_name), orient='table', default_handler=str)
+            docs.to_json(os.path.join(self.backup_folder_path, self.backup_name), orient='index', default_handler=str)
 
         print("Database successfully exported to JSON")
         print("Compressing backup folder...")
