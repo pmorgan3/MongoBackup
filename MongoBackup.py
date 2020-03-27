@@ -118,10 +118,28 @@ class MongoBackup:
 # End class
 
 def call(command, silent=False):
-    """ Runs a bash command safely, with shell=false, catches any non-zero
+    """
+    Summary:    
+        @DEPRECATED
+
+        Runs a bash command safely, with shell=false, catches any non-zero
         return codes. Raises slightly modified CalledProcessError exceptions
         on failures. 
-        Note: command is a string and cannot include pipes. """
+        Note: command is a string and cannot include pipes. ]
+    
+    Arguments:
+        command {[type]} -- [description]
+    
+    Keyword Arguments:
+        silent {bool} -- [description] (default: {False})
+    
+    Raises:
+        e: [description]
+    
+    Returns:
+        [type] -- [description]
+    """""
+
     try:
         if silent:
             with open(os.devnull, 'w') as FNULL:
@@ -145,7 +163,13 @@ def call(command, silent=False):
 # End run_docker
 
 def pairwise(iterable):
-    """Returns every two elements in the given list """
+    """Returns every two elements in the given list
+    
+    Arguments:
+        iterable {list} -- The input List
+    """    
+
+    """ """
     a = iter(iterable)
     return zip(a, a)
 # End pairwise
