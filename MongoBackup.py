@@ -47,7 +47,28 @@ class MongoBackup:
         #print('\ncollections:', self.collections)
         # print('\ndatabase:', self.database)
         # print total number of documents in a mongo collection
-        
+    
+    def backup_to_minio(self):
+        print("Uploading zip file...")
+        minioClient = Minio('play.min.io',
+                    access_key=self.access_key,
+                    secret_key=self.secret_key,
+                    secure=True)
+        try:
+            minioClient.make_bucket("testbackups", location="us-east-1")
+        except BucketAlreadyOwnedByYou as err:
+            pass
+        except BucketAlreadyExists as err:
+            pass
+        except ResponseError as err:
+            raise
+
+        try:
+            minioClient.fput_object("testbackups", self.zip_name, self.zip_name)
+        except ResponseError as err:
+            print(err)
+        print("Uploaded zip")
+
     def create_folder(self) -> None:
         d = datetime.datetime.now().strftime('%m:%d:%Y')
         path = os.getcwd()
@@ -57,13 +78,6 @@ class MongoBackup:
             os.mkdir(self.backup_folder_path)
         except Exception:
             pass
-
-    def export_csv(self):
-        pass
-    def export_minio(self):
-        pass
-    def export_json(self):
-        pass
 
     def backup(self) -> None:
         #print("\nin backup()")
@@ -88,16 +102,19 @@ class MongoBackup:
                 # append the MongoDB obj to the DataFrame obj
                 docs = docs.append(series_obj)#.str.encode('utf-8'))
             print("Backed up", str(collection.strip()))
-            name = str(datetime.datetime.now().strftime("%m:%d:%Y::%H:%M:%S")) + "_" + str(collection.strip()) + ".json"
+            self.backup_name = str(datetime.datetime.now().strftime("%m:%d:%Y::%H:%M:%S")) + "_" + str(collection.strip()) + ".json"
         
-            open(os.path.join( self.backup_folder_path, name ), "w+").close()
+            open(os.path.join( self.backup_folder_path, self.backup_name ), "w+").close()
 
-            docs.to_json(os.path.join(self.backup_folder_path, name), orient='table', default_handler=str)
+            docs.to_json(os.path.join(self.backup_folder_path, self.backup_name), orient='table', default_handler=str)
 
         print("Database successfully exported to JSON")
         print("Compressing backup folder...")
-        shutil.make_archive(self.backup_folder_path, 'zip', self.backup_folder_path)
+        self.zip_name = os.path.basename(shutil.make_archive(self.backup_folder_path, 'zip', self.backup_folder_path))
         print("\nCompression complete")
+        self.backup_to_minio()
+
+# End backup_mongo
 # End class
 
 def call(command, silent=False):
@@ -126,16 +143,6 @@ def call(command, silent=False):
     print("Inside run_docker")
     process = call(["docker", "run", "-d", f'--env MONGODB_HOST={mongo.host}', f"--env MONGODB_PORT={mongo.port}", f"--env MONGODB_USER={mongo.user}", f"--env MONGODB_PASS={mongo.password}", "--volume host.folder:/backup", "tutum/mongodb-backup"]) """
 # End run_docker
-
-
-def backup_mongo(mongo):
-    minioClient = Minio('play.min.io',
-                    access_key='Q3AM3UQ867SPQQA43P2F',
-                    secret_key='zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG',
-                    secure=True)
-    #run_docker(mongo)
-    mongo.backup()
-# End backup_mongo
 
 def pairwise(iterable):
     """Returns every two elements in the given list """
@@ -204,7 +211,7 @@ def file_parse(file) -> None:
     
     mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, conn_string, db )
     fp.close()
-    backup_mongo(mongo) 
+    mongo.backup()
     
 # End file_parse 
 
@@ -269,7 +276,7 @@ def main():
     mongo = MongoBackup(host, user, password, port, access_key, secret_key, connection_string, database_name)
 
     if file is None:
-        backup_mongo(mongo)
+        mongo.backup()
     else:
         print('\nFile input detected. Parsing...')
         file_parse(file)
