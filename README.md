@@ -29,6 +29,7 @@ credentials.txt can be named anything but it should look like this:
 ```
 MongoConnection=your_mongo_connection_string
 database=your_mongo_database_name
+Endpoint=your_minio_server_endpoint
 access=your_minio_access_key
 secret=your_minio_secret_key
 ```

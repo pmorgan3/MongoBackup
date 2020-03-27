@@ -2,4 +2,5 @@ MongoConnection=mongodb+srv://paulmorgan:webitects@cluster0-puhkc.mongodb.net/te
 database=sample_analytics
 access=Q3AM3UQ867SPQQA43P2F
 secret=zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+Endpoint=play.min.io
 port=27017

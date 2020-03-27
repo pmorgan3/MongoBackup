@@ -30,9 +30,7 @@ from subprocess import CalledProcessError, check_call
 
 slash_type = '\\' if os.name == 'nt' else '/'
 class MongoBackup:
-    def __init__(self, host, user, password, port, access_key, secret_key,  connection_string, database_name) -> None:
-        #client = pymongo.MongoClient("mongodb+srv://<username>:<password>@cluster0-puhkc.mongodb.net/test?retryWrites=true&w=majority")
-        #db = client.test
+    def __init__(self, host, user, password, port, access_key, secret_key,  connection_string, database_name, endpoint) -> None:
         self.host = host
         self.password = password
         self.port = port
@@ -44,15 +42,14 @@ class MongoBackup:
         self.client = pymongo.MongoClient(connection_string)
         self.database = self.client[str(database_name).strip()]
         self.collections = self.database.list_collection_names()
-        #print('\ncollections:', self.collections)
-        # print('\ndatabase:', self.database)
-        # print total number of documents in a mongo collection
+        self.minio_endpoint = endpoint
+    # End __init__()
     
     def backup_to_minio(self):
         print("Uploading zip file...")
-        minioClient = Minio('play.min.io',
-                    access_key=self.access_key,
-                    secret_key=self.secret_key,
+        minioClient = Minio(self.minio_endpoint.strip(),
+                    access_key=self.access_key.strip(),
+                    secret_key=self.secret_key.strip(),
                     secure=True)
         try:
             minioClient.make_bucket("testbackups", location="us-east-1")
@@ -68,6 +65,7 @@ class MongoBackup:
         except ResponseError as err:
             print(err)
         print("Uploaded zip")
+    # End backup_to_minio()
 
     def create_folder(self) -> None:
         d = datetime.datetime.now().strftime('%m:%d:%Y')
@@ -78,29 +76,31 @@ class MongoBackup:
             os.mkdir(self.backup_folder_path)
         except Exception:
             pass
+    # End create_folder()
 
     def backup(self) -> None:
-        #print("\nin backup()")
-        #collection = self.database[str(self.collections[0]).strip()]
-        #print('\ncollection:', collection)
-        
-        #print('\nmongo_docs:', mongo_docs)
         print('\nCollections:', self.collections)
         docs = pandas.DataFrame(columns=[])
         self.create_folder()
         for collection in self.collections:
+
             c = self.database[str(collection.strip())]
+
             mongo_docs = list(c.find())
+
             for num, doc in enumerate(mongo_docs):
                 # Convert ObjectId() to str
                 doc["_id"] = str(doc["_id"])
+
                 # get document _id from dict
                 doc_id = doc["_id"]
+
                 # create a Series obj from the MongoDB dict
                 series_obj = pandas.Series(doc, name=doc_id)
 
                 # append the MongoDB obj to the DataFrame obj
                 docs = docs.append(series_obj)#.str.encode('utf-8'))
+
             print("Backed up", str(collection.strip()))
             self.backup_name = str(datetime.datetime.now().strftime("%m:%d:%Y::%H:%M:%S")) + "_" + str(collection.strip()) + ".json"
         
@@ -113,8 +113,7 @@ class MongoBackup:
         self.zip_name = os.path.basename(shutil.make_archive(self.backup_folder_path, 'zip', self.backup_folder_path))
         print("\nCompression complete")
         self.backup_to_minio()
-
-# End backup_mongo
+    # End backup()
 # End class
 
 def call(command, silent=False):
@@ -156,11 +155,7 @@ def call(command, silent=False):
         e.message = "%s failed with error code %s" % (e.cmd[0], e.returncode)
         e.cmd = e.cmd[0] + " [arguments stripped for security]"
         raise e
-
-""" def run_docker(mongo: MongoBackup):
-    print("Inside run_docker")
-    process = call(["docker", "run", "-d", f'--env MONGODB_HOST={mongo.host}', f"--env MONGODB_PORT={mongo.port}", f"--env MONGODB_USER={mongo.user}", f"--env MONGODB_PASS={mongo.password}", "--volume host.folder:/backup", "tutum/mongodb-backup"]) """
-# End run_docker
+# End call()
 
 def pairwise(iterable):
     """Returns every two elements in the given list
@@ -191,6 +186,7 @@ def file_parse(file) -> None:
     mongo_pass_variants = ["pass", "password", "MongoPass", "mongo_pass", "MongoPassword", "Password", "mongo_password"]
     mongo_port_variants = ["port", "mongo_port", "MongoPort", "Port"]
     mongo_user_variants = ["User", "user", "MongoUser", "mongo_user"]
+    minio_endpoint_variants = ["MinioEndpoint", "Endpoint", "minio_endpoint", "endpoint"]
 
     conn_string = None
     db = None
@@ -201,39 +197,32 @@ def file_parse(file) -> None:
     mongo_user = None
     mongo_pass = None
     mongo_port = None
+    minio_endpoint = None
     for line in fp:
         arg_list = line.split('=', 1)
         for arg, val in pairwise(arg_list):
-            #print('arg: ', arg)
             if arg in connection_string_variants:
-                #print("val: ", val)
                 conn_string = val
             elif arg in db_name_variants:
-                #print("val: ", val)
                 db = val
             elif arg in collections_variants:
-                #print("val: ", val)
                 col = val
             elif arg in access_variants:
-                #print("access key: ", val)
                 access = val
             elif arg in secret_variants:
-                #print("secret key: ", val)
                 secret = val
             elif arg in mongo_host_variants:
-                #print("host: ", val)
                 mongo_host = val
             elif arg in mongo_pass_variants:
-                #print("password: ", val)
                 mongo_pass = val
             elif arg in mongo_port_variants:
-                #print("port: ", val)
                 mongo_port = val
             elif arg in mongo_user_variants:
-                #print("user: ", val)
                 mongo_user = val
+            elif arg in minio_endpoint_variants:
+                minio_endpoint = val
     
-    mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, conn_string, db )
+    mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, conn_string, db, minio_endpoint )
     fp.close()
     mongo.backup()
     
@@ -241,7 +230,7 @@ def file_parse(file) -> None:
 
 def main():
     argument_list = sys.argv[1:]
-    short_options = "c:n:col:h:f:a:k:p:u"
+    short_options = "c:n:col:h:f:a:k:p:u:e"
     options = [
             "connection=",
             "name=",
@@ -254,6 +243,7 @@ def main():
             "user=",
             "password=",
             "port=",
+            "endpoint="
             ]
 
     try:
@@ -274,6 +264,7 @@ def main():
     host = None
     password = None
     user = None
+    minio_endpoint = None
     port = None
     # Loop through the arguments and assign them to our variables
     for curr_arg, curr_val in arguments:
@@ -297,7 +288,9 @@ def main():
             host = curr_val
         elif curr_arg in ("-u", "--user"):
             user = curr_val
-    mongo = MongoBackup(host, user, password, port, access_key, secret_key, connection_string, database_name)
+        elif curr_arg in ("-e", "--endpoint"):
+            minio_endpoint = curr_val
+    mongo = MongoBackup(host, user, password, port, access_key, secret_key, connection_string, database_name, minio_endpoint)
 
     if file is None:
         mongo.backup()
