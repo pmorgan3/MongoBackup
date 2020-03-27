@@ -1,5 +1,5 @@
 MongoConnection=mongodb+srv://paulmorgan:webitects@cluster0-puhkc.mongodb.net/test?retryWrites=true&w=majority
-database=sample_airbnb
+database=sample_analytics
 access=tradingblock
 secret=Tradingblock1234!
 port=27017

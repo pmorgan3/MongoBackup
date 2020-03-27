@@ -17,7 +17,6 @@ from minio import Minio
 from minio.error import (ResponseError, BucketAlreadyOwnedByYou, BucketAlreadyExists)
 import argparse
 import sys
-#import dnspython
 import getopt
 import pymongo
 from os import path, listdir, makedirs, devnull
@@ -43,8 +42,8 @@ class MongoBackup:
         self.client = pymongo.MongoClient(connection_string)
         self.database = self.client[str(database_name).strip()]
         self.collections = self.database.list_collection_names()
-        #print('\ncollections:', self.collections)
-        #print('\ndatabase:', self.database)
+        print('\ncollections:', self.collections)
+        print('\ndatabase:', self.database)
         # print total number of documents in a mongo collection
         
     def create_folder(self):
@@ -63,28 +62,32 @@ class MongoBackup:
 
     def backup(self):
         #print("\nin backup()")
-        collection = self.database[str(self.collections[0]).strip()]
+        #collection = self.database[str(self.collections[0]).strip()]
         #print('\ncollection:', collection)
-        mongo_docs = list(collection.find())
+        
         #print('\nmongo_docs:', mongo_docs)
         docs = pandas.DataFrame(columns=[])
-
-        for num, doc in enumerate(mongo_docs):
-            # Convert ObjectId() to str
-            doc["_id"] = str(doc["_id"])
-            # get document _id from dict
-            doc_id = doc["_id"]
-            # create a Series obj from the MongoDB dict
-            series_obj = pandas.Series(doc, name=doc_id)
-
-            # append the MongoDB obj to the DataFrame obj
-            docs = docs.append(series_obj)#.str.encode('utf-8'))
-        
-        name = str(datetime.datetime.now().strftime("%m:%d:%Y::%H:%M:%S")) + "_" + str(self.collections[0].strip()) + ".json"
         self.create_folder()
-        open(name, "w+").close()
+        for collection in self.collections:
+            c = self.database[str(collection.strip())]
+            mongo_docs = list(c.find())
+            for num, doc in enumerate(mongo_docs):
+                # Convert ObjectId() to str
+                doc["_id"] = str(doc["_id"])
+                # get document _id from dict
+                doc_id = doc["_id"]
+                # create a Series obj from the MongoDB dict
+                series_obj = pandas.Series(doc, name=doc_id)
 
-        docs.to_json(name, orient='table', default_handler=str)
+                # append the MongoDB obj to the DataFrame obj
+                docs = docs.append(series_obj)#.str.encode('utf-8'))
+        
+            name = str(datetime.datetime.now().strftime("%m:%d:%Y::%H:%M:%S")) + "_" + str(collection.strip()) + ".json"
+        
+            open(name, "w+").close()
+
+            docs.to_json(name, orient='table', default_handler=str)
+
         print("Database successfully exported to JSON")
 # End class
 
