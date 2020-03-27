@@ -18,6 +18,7 @@ from minio.error import (ResponseError, BucketAlreadyOwnedByYou, BucketAlreadyEx
 import argparse
 import sys
 import getopt
+import shutil
 import pymongo
 from os import path, listdir, makedirs, devnull
 import subprocess
@@ -27,9 +28,7 @@ import datetime
 from shlex import split as command_to_array
 from subprocess import CalledProcessError, check_call
 
-# When making a directory we need to change the slash type depending on OS
 slash_type = '\\' if os.name == 'nt' else '/'
-
 class MongoBackup:
     def __init__(self, host, user, password, port, access_key, secret_key,  connection_string, database_name) -> None:
         #client = pymongo.MongoClient("mongodb+srv://<username>:<password>@cluster0-puhkc.mongodb.net/test?retryWrites=true&w=majority")
@@ -46,7 +45,7 @@ class MongoBackup:
         self.database = self.client[str(database_name).strip()]
         self.collections = self.database.list_collection_names()
         print('\ncollections:', self.collections)
-        print('\ndatabase:', self.database)
+        # print('\ndatabase:', self.database)
         # print total number of documents in a mongo collection
         
     def create_folder(self) -> None:
@@ -87,7 +86,7 @@ class MongoBackup:
 
                 # append the MongoDB obj to the DataFrame obj
                 docs = docs.append(series_obj)#.str.encode('utf-8'))
-        
+            print("\n Backed up", str(collection.strip()))
             name = str(datetime.datetime.now().strftime("%m:%d:%Y::%H:%M:%S")) + "_" + str(collection.strip()) + ".json"
         
             open(os.path.join( self.backup_folder_path, name ), "w+").close()
@@ -95,6 +94,9 @@ class MongoBackup:
             docs.to_json(os.path.join(self.backup_folder_path, name), orient='table', default_handler=str)
 
         print("Database successfully exported to JSON")
+        print("Compressing backup folder...")
+        shutil.make_archive(self.backup_folder_path, 'zip', self.backup_folder_path)
+        print("\nCompression complete")
 # End class
 
 def call(command, silent=False):
