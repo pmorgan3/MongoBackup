@@ -39,7 +39,7 @@ User=mongo_admin_username
 Password=mongo_admin_password
 ```
 
-If you want to use environment variables instead of pasting your information in plain text, run the script using the ```--environment``` flag. And have your credentials.txt file store your variable names instead of their values. 
+If you want to use environment variables instead of pasting your information in plain text, run the script using the ```-e``` or  ```--environment``` flags. And have your credentials.txt file store your variable names instead of their values. 
 
 ## Deployment
 
