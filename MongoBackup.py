@@ -212,7 +212,7 @@ def file_parse(file) -> None:
     mongo_port_variants = ["port", "mongo_port", "MongoPort", "Port"]
     mongo_user_variants = ["User", "user", "MongoUser", "mongo_user"]
     minio_endpoint_variants = ["MinioEndpoint", "Endpoint", "minio_endpoint", "endpoint"]
-    minio_bucket_variants = ["MinioBucket", "Bucket", "minio_bucket", "bucket"]
+    minio_bucket_variants = ["MinioBucket", "Bucket", "minio_bucket", "bucket", "BucketName"]
     minio_location_variants = ["MinioLocation", "minio_location", "location"]
 
     conn_string = None
