@@ -41,8 +41,7 @@ Password=mongo_admin_password
 
 ## Deployment
 
-This script is build to work on both windows and Linux. However, windows performance has not been tested
-
+This script is built to run on most unix systems. As long as you have a unix based terminal and mongodb tools installed you should be fine.
 
 
 ## License
