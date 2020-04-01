@@ -86,13 +86,6 @@ class MongoBackup:
 
     def backup_mongodump(self) -> None:
         today = datetime.datetime.now()
-        #url = pymongo.uri_parser.parse_uri(self.connection_string)
-
-        #username = url['username']
-        #password = url['password']
-        #hostname = url['hostname']
-        #port = self.port if type(self.port) is not None else 27017
-        #db = url['database']
         self.create_folder()
         output_dir = os.path.abspath(os.path.join(
             os.path.curdir,
@@ -202,22 +195,9 @@ def file_parse(file) -> None:
 
 def main():
     argument_list = sys.argv[1:]
-    short_options = "c:n:col:h:f:a:k:p:u:e:b:l"
+    short_options = "f"
     options = [
-            "connection=",
-            "name=",
-            "db=",
-            "collections=",
-            "host",
-            "file=",
-            "accesskey=",
-            "secret="
-            "user=",
-            "password=",
-            "port=",
-            "endpoint=",
-            "bucket=",
-            "location="
+            "file="
             ]
 
     try:
@@ -225,8 +205,6 @@ def main():
     except getopt.error as err:
         print(str(err))
         sys.exit(2)
-    
-
 
     # Declare variables for use later
     file = None
