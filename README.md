@@ -39,10 +39,6 @@ User=mongo_admin_username
 Password=mongo_admin_password
 ```
 
-## Important Note
-
-Due to a limitation in the compression library used by this software, Mongo Databases over 4GB in size may cause this software to not work as intended
-
 ## Deployment
 
 This script is build to work on both windows and Linux. However, windows performance has not been tested
