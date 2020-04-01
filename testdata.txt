@@ -5,3 +5,6 @@ secret=zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
 Endpoint=play.min.io
 port=27017
 BucketName=testbucket
+MongoHost=Cluster0-shard-0/cluster0-shard-00-00-puhkc.mongodb.net:27017,cluster0-shard-00-01-puhkc.mongodb.net:27017,cluster0-shard-00-02-puhkc.mongodb.net:27017
+User=paulmorgan
+Password=webitects

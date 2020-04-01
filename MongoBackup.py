@@ -18,6 +18,8 @@ from minio.error import (ResponseError, BucketAlreadyOwnedByYou, BucketAlreadyEx
 import argparse
 import sys
 import getopt
+import urllib
+import logging
 import shutil
 import pymongo
 from os import path, listdir, makedirs, devnull
@@ -43,6 +45,7 @@ class MongoBackup:
         self.database = self.client[str(database_name).strip()]
         self.collections = self.database.list_collection_names()  
         self.minio_bucket = bucket
+        self.database_name = str(database_name).strip()
         self.minio_endpoint = endpoint
         self.location = location
     # End __init__()
@@ -69,28 +72,6 @@ class MongoBackup:
         print("Uploaded zip")
         print("Backup process complete. Have a nice day :)")
     # End backup_to_minio()
-    
-    # Print iteration progress
-    def printProgressBar(self, iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
-        """
-        Call in a loop to create terminal progress bar
-        @params:
-            iteration   - Required  : current iteration (Int)
-            total       - Required  : total iterations (Int)
-            prefix      - Optional  : prefix string (Str)
-            suffix      - Optional  : suffix string (Str)
-            decimals    - Optional  : positive number of decimals in percent complete (Int)
-            length      - Optional  : character length of bar (Int)
-            fill        - Optional  : bar fill character (Str)
-            printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
-        """
-        percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-        filledLength = int(length * iteration // total)
-        bar = fill * filledLength + '-' * (length - filledLength)
-        print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = printEnd)
-        # Print New Line on Complete
-        if iteration == total: 
-            print()
 
     def create_folder(self) -> None:
         d = datetime.datetime.now().strftime('%m:%d:%Y')
@@ -103,86 +84,44 @@ class MongoBackup:
             pass
     # End create_folder()
 
-    def backup(self) -> None:
-        print('\nCollections:', self.collections)
-        docs = pandas.DataFrame(columns=[])
+    def backup_mongodump(self) -> None:
+        today = datetime.datetime.now()
+        #url = pymongo.uri_parser.parse_uri(self.connection_string)
+
+        #username = url['username']
+        #password = url['password']
+        #hostname = url['hostname']
+        #port = self.port if type(self.port) is not None else 27017
+        #db = url['database']
         self.create_folder()
-        for collection in self.collections:
+        output_dir = os.path.abspath(os.path.join(
+            os.path.curdir,
+            self.backup_folder_path
+        ))
 
-            c = self.database[str(collection.strip())]
+        assert os.path.isdir(output_dir), 'Directory %s can\'t be found.' % output_dir
 
-            mongo_docs = list(c.find())
-            l = len(mongo_docs)
-            self.printProgressBar(0, l, prefix=str(collection.strip()), suffix='Complete', length=50)
-            for num, doc in enumerate(c.find()):
-                # Convert ObjectId() to str
-                doc["_id"] = str(doc["_id"])
+        output_dir = os.path.abspath(os.path.join(output_dir, '%s__%s'% (self.database_name, today.strftime('%Y_%m_%d_%H%M%S'))))
 
-                # get document _id from dict
-                doc_id = doc["_id"]
+        #logging.info('Backing up %s from %s to %s' % (db, hostname, output_dir))
 
-                # create a Series obj from the MongoDB dict
-                series_obj = pandas.Series(doc, name=doc_id)
-
-                # append the MongoDB obj to the DataFrame obj
-                docs = docs.append(series_obj)#.str.encode('utf-8'))
-                self.printProgressBar(num + 1, l, prefix=str(collection.strip()), suffix='Complete', length=50)
-
-            print("Backed up", str(collection.strip()))
-            self.backup_name = str(datetime.datetime.now().strftime("%m:%d:%Y::%H:%M:%S")) + "_" + str(collection.strip()) + ".json"
-        
-            open(os.path.join( self.backup_folder_path, self.backup_name ), "w+").close()
-
-            docs.to_json(os.path.join(self.backup_folder_path, self.backup_name), orient='index', default_handler=str)
-
-        print("Database successfully exported to JSON")
-        print("Compressing backup folder...")
+        backup_output = subprocess.check_output(
+            [
+                'mongodump',
+                '--host', '%s' % self.host,
+                '--username', '%s' % self.user,
+                '--password', '%s' % self.password,
+                '--ssl',
+                '--authenticationDatabase', 'admin',
+                '--db', '%s' % self.database_name,
+                '-o', '%s' % output_dir
+            ]
+        )
+        logging.info(backup_output)
         self.zip_name = os.path.basename(shutil.make_archive(self.backup_folder_path, 'zip', self.backup_folder_path))
-        print("\nCompression complete")
         self.backup_to_minio()
-    # End backup()
+    # End backup_mongodump()
 # End class
-
-def call(command, silent=False):
-    """
-    Summary:    
-        @DEPRECATED
-
-        Runs a bash command safely, with shell=false, catches any non-zero
-        return codes. Raises slightly modified CalledProcessError exceptions
-        on failures. 
-        Note: command is a string and cannot include pipes. ]
-    
-    Arguments:
-        command {[type]} -- [description]
-    
-    Keyword Arguments:
-        silent {bool} -- [description] (default: {False})
-    
-    Raises:
-        e: [description]
-    
-    Returns:
-        [type] -- [description]
-    """""
-
-    try:
-        if silent:
-            with open(os.devnull, 'w') as FNULL:
-                return subprocess.check_call(command_to_array(command), stdout=FNULL)
-        else:
-            # Using the defaults, shell=False, no i/o redirection.
-            return check_call(command_to_array(command))
-    except CalledProcessError as e:
-        # We are modifying the erro itself for 2 reasons.
-        #   1) it WILL contain login credentials
-        #   2) CalledProcessError is slightly not to spec
-        #   (the message variable is blank), which means
-        #   cronutils.ErrorHandler would report unlabeled stack traces.
-        e.message = "%s failed with error code %s" % (e.cmd[0], e.returncode)
-        e.cmd = e.cmd[0] + " [arguments stripped for security]"
-        raise e
-# End call()
 
 def pairwise(iterable):
     """Returns every two elements in the given list
@@ -257,7 +196,7 @@ def file_parse(file) -> None:
     
     mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, conn_string, db, minio_endpoint, minio_bucket, minio_location )
     fp.close()
-    mongo.backup()
+    mongo.backup_mongodump()
     
 # End file_parse 
 
@@ -286,57 +225,20 @@ def main():
     except getopt.error as err:
         print(str(err))
         sys.exit(2)
-    print('starting backup process...')
+    
 
 
     # Declare variables for use later
-    connection_string = None
-    database_name = None
     file = None
-    collections = None
-    access_key = None
-    secret_key = None
-    host = None
-    password = None
-    user = None
-    minio_bucket = None
-    minio_location = None
-    minio_endpoint = None
-    port = None
     # Loop through the arguments and assign them to our variables
     for curr_arg, curr_val in arguments:
-        if curr_arg in ("-c", "--connection"):
-            connection_string = curr_val
-        elif curr_arg in ("-n", "--db", "--name"):
-            database_name = curr_val
-        elif curr_arg in ("--collections", "-col"):
-            collections = curr_val
-        elif curr_arg in ("-f", "--file"):
+        if curr_arg in ("-f", "--file"):
             file = curr_val
-        elif curr_arg in ("-a", "--accesskey"):
-            access_key = curr_val
-        elif curr_arg in ("-k", "--secret"):
-            secret_key = curr_val
-        elif curr_arg in ("--port"):
-            port = curr_val
-        elif curr_arg in ("--password"):
-            password = curr_val
-        elif curr_arg in ("-h", "--host"):
-            host = curr_val
-        elif curr_arg in ("-u", "--user"):
-            user = curr_val
-        elif curr_arg in ("-e", "--endpoint"):
-            minio_endpoint = curr_val
-        elif curr_arg in ("-b", "--bucket"):
-            minio_bucket = curr_val
-        elif curr_arg in ("-l", "--location"):
-            minio_location = curr_val
-    mongo = MongoBackup(host, user, password, port, access_key, secret_key, connection_string, database_name, minio_endpoint, minio_bucket, minio_location)
-
     if file is None:
-        mongo.backup()
+        print('ERROR: Need input file')
+        print('Usage example: python3 MongoBackup.py --file=credentials.txt')
     else:
-        print('\nFile input detected. Parsing...')
+        print('starting backup process...')
         file_parse(file)
     
 # End main
