@@ -1,6 +1,6 @@
 # MongoBackup.py
 
-This script copies over all the collections in a mongo database to json files. It then compresses the files into a .zip format and uploads them to min.io
+This script runs mongodump on the given database. It then compresses the dumps into a .zip format and uploads them to min.io
 
 ## Getting Started
 
