@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import pandas
 from minio import Minio
 from minio.error import (ResponseError, BucketAlreadyOwnedByYou, BucketAlreadyExists)
 import argparse
@@ -24,7 +22,6 @@ import shutil
 import pymongo
 from os import path, listdir, makedirs, devnull
 import subprocess
-import json
 import os
 import datetime
 from shlex import split as command_to_array
@@ -136,7 +133,6 @@ def file_parse(file) -> None:
     # Allows for different formatting of the options
     connection_string_variants = ["mongo_connection", "connection_string", "conn", "mongo_connection_string", "MongoConnection"]
     db_name_variants = ["database", "name", "database_name", "db", "MongoDatabase", "mongo_database", "MongoDB", "MongoDb"]
-    collections_variants = ["collections", "collection", "col"]
     access_variants = ["access_key", "access", "accesskey", "accessKey"]
     secret_variants = ["secret", "secret_key", "secretKey"]
     mongo_host_variants = ["host", "mongo_host", "Host", "MongoHost"]
@@ -149,7 +145,6 @@ def file_parse(file) -> None:
 
     conn_string = None
     db = None
-    col = None
     access = None
     secret = None
     mongo_host = None
@@ -166,8 +161,6 @@ def file_parse(file) -> None:
                 conn_string = val.strip()
             elif arg in db_name_variants:
                 db = val.strip()
-            elif arg in collections_variants:
-                col = val.strip()
             elif arg in access_variants:
                 access = val.strip()
             elif arg in secret_variants:
