@@ -30,7 +30,7 @@ from subprocess import CalledProcessError, check_call
 
 slash_type = '\\' if os.name == 'nt' else '/'
 class MongoBackup:
-    def __init__(self, host, user, password, port, access_key, secret_key,  connection_string, database_name, endpoint) -> None:
+    def __init__(self, host, user, password, port, access_key, secret_key,  connection_string, database_name, endpoint, bucket, location) -> None:
         self.host = host
         self.password = password
         self.port = port
@@ -42,7 +42,9 @@ class MongoBackup:
         self.client = pymongo.MongoClient(connection_string)
         self.database = self.client[str(database_name).strip()]
         self.collections = self.database.list_collection_names()  
+        self.minio_bucket = bucket
         self.minio_endpoint = endpoint
+        self.location = location
     # End __init__()
     
     def backup_to_minio(self):
@@ -52,7 +54,7 @@ class MongoBackup:
                     secret_key=self.secret_key.strip(),
                     secure=True)
         try:
-            minioClient.make_bucket("testbackups", location="us-east-1")
+            minioClient.make_bucket(self.minio_bucket, location=self.location)
         except BucketAlreadyOwnedByYou as err:
             pass
         except BucketAlreadyExists as err:
@@ -61,12 +63,34 @@ class MongoBackup:
             raise
 
         try:
-            minioClient.fput_object("testbackups", self.zip_name, self.zip_name)
+            minioClient.fput_object(self.minio_bucket, self.zip_name, self.zip_name)
         except ResponseError as err:
             print(err)
         print("Uploaded zip")
         print("Backup process complete. Have a nice day :)")
     # End backup_to_minio()
+    
+    # Print iteration progress
+    def printProgressBar(self, iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+        """
+        Call in a loop to create terminal progress bar
+        @params:
+            iteration   - Required  : current iteration (Int)
+            total       - Required  : total iterations (Int)
+            prefix      - Optional  : prefix string (Str)
+            suffix      - Optional  : suffix string (Str)
+            decimals    - Optional  : positive number of decimals in percent complete (Int)
+            length      - Optional  : character length of bar (Int)
+            fill        - Optional  : bar fill character (Str)
+            printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+        """
+        percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+        filledLength = int(length * iteration // total)
+        bar = fill * filledLength + '-' * (length - filledLength)
+        print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = printEnd)
+        # Print New Line on Complete
+        if iteration == total: 
+            print()
 
     def create_folder(self) -> None:
         d = datetime.datetime.now().strftime('%m:%d:%Y')
@@ -88,8 +112,9 @@ class MongoBackup:
             c = self.database[str(collection.strip())]
 
             mongo_docs = list(c.find())
-
-            for doc in c.find():
+            l = len(mongo_docs)
+            self.printProgressBar(0, l, prefix=str(collection.strip()), suffix='Complete', length=50)
+            for num, doc in enumerate(c.find()):
                 # Convert ObjectId() to str
                 doc["_id"] = str(doc["_id"])
 
@@ -101,6 +126,7 @@ class MongoBackup:
 
                 # append the MongoDB obj to the DataFrame obj
                 docs = docs.append(series_obj)#.str.encode('utf-8'))
+                self.printProgressBar(num + 1, l, prefix=str(collection.strip()), suffix='Complete', length=50)
 
             print("Backed up", str(collection.strip()))
             self.backup_name = str(datetime.datetime.now().strftime("%m:%d:%Y::%H:%M:%S")) + "_" + str(collection.strip()) + ".json"
@@ -186,6 +212,8 @@ def file_parse(file) -> None:
     mongo_port_variants = ["port", "mongo_port", "MongoPort", "Port"]
     mongo_user_variants = ["User", "user", "MongoUser", "mongo_user"]
     minio_endpoint_variants = ["MinioEndpoint", "Endpoint", "minio_endpoint", "endpoint"]
+    minio_bucket_variants = ["MinioBucket", "Bucket", "minio_bucket", "bucket"]
+    minio_location_variants = ["MinioLocation", "minio_location", "location"]
 
     conn_string = None
     db = None
@@ -196,32 +224,38 @@ def file_parse(file) -> None:
     mongo_user = None
     mongo_pass = None
     mongo_port = None
+    minio_bucket = None
+    minio_location = None
     minio_endpoint = None
     for line in fp:
         arg_list = line.split('=', 1)
         for arg, val in pairwise(arg_list):
             if arg in connection_string_variants:
-                conn_string = val
+                conn_string = val.strip()
             elif arg in db_name_variants:
-                db = val
+                db = val.strip()
             elif arg in collections_variants:
-                col = val
+                col = val.strip()
             elif arg in access_variants:
-                access = val
+                access = val.strip()
             elif arg in secret_variants:
-                secret = val
+                secret = val.strip()
             elif arg in mongo_host_variants:
-                mongo_host = val
+                mongo_host = val.strip()
             elif arg in mongo_pass_variants:
-                mongo_pass = val
+                mongo_pass = val.strip()
             elif arg in mongo_port_variants:
-                mongo_port = val
+                mongo_port = val.strip()
             elif arg in mongo_user_variants:
-                mongo_user = val
+                mongo_user = val.strip()
             elif arg in minio_endpoint_variants:
-                minio_endpoint = val
+                minio_endpoint = val.strip()
+            elif arg in minio_bucket_variants:
+                minio_bucket = val.strip()
+            elif arg in minio_location_variants:
+                minio_location = val.strip()
     
-    mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, conn_string, db, minio_endpoint )
+    mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, conn_string, db, minio_endpoint, minio_bucket, minio_location )
     fp.close()
     mongo.backup()
     
@@ -229,7 +263,7 @@ def file_parse(file) -> None:
 
 def main():
     argument_list = sys.argv[1:]
-    short_options = "c:n:col:h:f:a:k:p:u:e"
+    short_options = "c:n:col:h:f:a:k:p:u:e:b:l"
     options = [
             "connection=",
             "name=",
@@ -242,7 +276,9 @@ def main():
             "user=",
             "password=",
             "port=",
-            "endpoint="
+            "endpoint=",
+            "bucket=",
+            "location="
             ]
 
     try:
@@ -263,6 +299,8 @@ def main():
     host = None
     password = None
     user = None
+    minio_bucket = None
+    minio_location = None
     minio_endpoint = None
     port = None
     # Loop through the arguments and assign them to our variables
@@ -289,7 +327,11 @@ def main():
             user = curr_val
         elif curr_arg in ("-e", "--endpoint"):
             minio_endpoint = curr_val
-    mongo = MongoBackup(host, user, password, port, access_key, secret_key, connection_string, database_name, minio_endpoint)
+        elif curr_arg in ("-b", "--bucket"):
+            minio_bucket = curr_val
+        elif curr_arg in ("-l", "--location"):
+            minio_location = curr_val
+    mongo = MongoBackup(host, user, password, port, access_key, secret_key, connection_string, database_name, minio_endpoint, minio_bucket, minio_location)
 
     if file is None:
         mongo.backup()
