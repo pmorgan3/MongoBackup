@@ -41,6 +41,8 @@ Password=mongo_admin_password
 
 If you want to use environment variables instead of pasting your information in plain text, run the script using the ```-e``` or  ```--environment``` flags. And have your credentials.txt file store your variable names instead of their values. 
 
+If you want to connect to a DB with ssl enabled, pass in the ```-s``` or ```--ssl``` flags.
+
 ## Deployment
 
 This script is built to run on most unix systems. As long as you have a unix based terminal and mongodb tools installed you should be fine.
