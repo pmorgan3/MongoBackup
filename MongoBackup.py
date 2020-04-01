@@ -29,18 +29,14 @@ from subprocess import CalledProcessError, check_call
 
 slash_type = '\\' if os.name == 'nt' else '/'
 class MongoBackup:
-    def __init__(self, host, user, password, port, access_key, secret_key,  connection_string, database_name, endpoint, bucket, location) -> None:
+    def __init__(self, host, user, password, port, access_key, secret_key,  database_name, endpoint, bucket, location, ssl=False) -> None:
         self.host = host
         self.password = password
         self.port = port
         self.user = user
-        self.connection_string = connection_string
-        
+        self.ssl = ssl
         self.secret_key = secret_key
         self.access_key = access_key
-        self.client = pymongo.MongoClient(connection_string)
-        self.database = self.client[str(database_name).strip()]
-        self.collections = self.database.list_collection_names()  
         self.minio_bucket = bucket
         self.database_name = str(database_name).strip()
         self.minio_endpoint = endpoint
@@ -95,18 +91,26 @@ class MongoBackup:
 
         #logging.info('Backing up %s from %s to %s' % (db, hostname, output_dir))
 
-        backup_output = subprocess.check_output(
-            [
-                'mongodump',
+        # Theres definitely a better way to do this
+        no_ssl = ['mongodump',
+                '--host', '%s' % self.host,
+                '--username', '%s' % self.user,
+                '--password', '%s' % self.password,
+                '--authenticationDatabase', 'admin',
+                '--db', '%s' % self.database_name,
+                '-o', '%s' % output_dir ]
+        with_ssl = ['mongodump',
                 '--host', '%s' % self.host,
                 '--username', '%s' % self.user,
                 '--password', '%s' % self.password,
                 '--ssl',
                 '--authenticationDatabase', 'admin',
                 '--db', '%s' % self.database_name,
-                '-o', '%s' % output_dir
-            ]
-        )
+                '-o', '%s' % output_dir ]
+
+        use_ssl = with_ssl if self.ssl is True else  no_ssl
+
+        backup_output = subprocess.check_output(use_ssl)
         logging.info(backup_output)
         self.zip_name = os.path.basename(shutil.make_archive(self.backup_folder_path, 'zip', self.backup_folder_path))
         self.backup_to_minio()
@@ -125,13 +129,12 @@ def pairwise(iterable):
     return zip(a, a)
 # End pairwise
 
-def file_parse(file, use_environ=False) -> None:
+def file_parse(file, use_environ=False, ssl=False) -> None:
     """Parses the given file (If applicable) """
 
     fp = open(file, 'r')
 
     # Allows for different formatting of the options
-    connection_string_variants = ["mongo_connection", "connection_string", "conn", "mongo_connection_string", "MongoConnection"]
     db_name_variants = ["database", "name", "database_name", "db", "MongoDatabase", "mongo_database", "MongoDB", "MongoDb"]
     access_variants = ["access_key", "access", "accesskey", "accessKey"]
     secret_variants = ["secret", "secret_key", "secretKey"]
@@ -143,7 +146,6 @@ def file_parse(file, use_environ=False) -> None:
     minio_bucket_variants = ["MinioBucket", "Bucket", "minio_bucket", "bucket", "BucketName"]
     minio_location_variants = ["MinioLocation", "minio_location", "location"]
 
-    conn_string = None
     db = None
     access = None
     secret = None
@@ -157,9 +159,7 @@ def file_parse(file, use_environ=False) -> None:
     for line in fp:
         arg_list = line.split('=', 1)
         for arg, val in pairwise(arg_list):
-            if arg in connection_string_variants:
-                conn_string = os.environ[val.strip()] if use_environ is True else val.strip()
-            elif arg in db_name_variants:
+            if arg in db_name_variants:
                 db = os.environ[val.strip()] if use_environ is True else val.strip()
             elif arg in access_variants:
                 access = os.environ[val.strip()] if use_environ is True else val.strip()
@@ -180,7 +180,7 @@ def file_parse(file, use_environ=False) -> None:
             elif arg in minio_location_variants:
                 minio_location = os.environ[val.strip()] if use_environ is True else val.strip()
     
-    mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, conn_string, db, minio_endpoint, minio_bucket, minio_location )
+    mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, db, minio_endpoint, minio_bucket, minio_location, ssl=ssl )
     fp.close()
     mongo.backup_mongodump()
     
@@ -188,10 +188,11 @@ def file_parse(file, use_environ=False) -> None:
 
 def main():
     argument_list = sys.argv[1:]
-    short_options = "fe"
+    short_options = "fes"
     options = [
             "file=",
-            "environment"
+            "environment",
+            "ssl"
             ]
 
     try:
@@ -203,19 +204,22 @@ def main():
     # Declare variables for use later
     file = None
     use_env = False
+    use_ssl = False
     # Loop through the arguments and assign them to our variables
     for curr_arg, curr_val in arguments:
         if curr_arg in ("-f", "--file"):
             file = curr_val
         elif curr_arg in ("-e", "--environment"):
             use_env = True
+        elif curr_arg in ("-s", "--ssl"):
+            use_ssl = True
 
     if file is None:
         print('ERROR: Need input file')
         print('Usage example: python3 MongoBackup.py --file=credentials.txt')
     else:
         print('starting backup process...')
-        file_parse(file, use_env)
+        file_parse(file, use_env, use_ssl)
     
 # End main
 
