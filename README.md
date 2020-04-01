@@ -39,6 +39,8 @@ User=mongo_admin_username
 Password=mongo_admin_password
 ```
 
+If you want to use environment variables instead of pasting your information in plain text, run the script using the ```--environment``` flag. And have your credentials.txt file store your variable names instead of their values. 
+
 ## Deployment
 
 This script is built to run on most unix systems. As long as you have a unix based terminal and mongodb tools installed you should be fine.

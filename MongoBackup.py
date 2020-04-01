@@ -125,7 +125,7 @@ def pairwise(iterable):
     return zip(a, a)
 # End pairwise
 
-def file_parse(file) -> None:
+def file_parse(file, use_environ=False) -> None:
     """Parses the given file (If applicable) """
 
     fp = open(file, 'r')
@@ -158,27 +158,27 @@ def file_parse(file) -> None:
         arg_list = line.split('=', 1)
         for arg, val in pairwise(arg_list):
             if arg in connection_string_variants:
-                conn_string = val.strip()
+                conn_string = os.environ[val.strip()] if use_environ is True else val.strip()
             elif arg in db_name_variants:
-                db = val.strip()
+                db = os.environ[val.strip()] if use_environ is True else val.strip()
             elif arg in access_variants:
-                access = val.strip()
+                access = os.environ[val.strip()] if use_environ is True else val.strip()
             elif arg in secret_variants:
-                secret = val.strip()
+                secret = os.environ[val.strip()] if use_environ is True else val.strip()
             elif arg in mongo_host_variants:
-                mongo_host = val.strip()
+                mongo_host = os.environ[val.strip()] if use_environ is True else val.strip()
             elif arg in mongo_pass_variants:
-                mongo_pass = val.strip()
+                mongo_pass = os.environ[val.strip()] if use_environ is True else val.strip()
             elif arg in mongo_port_variants:
-                mongo_port = val.strip()
+                mongo_port = os.environ[val.strip()] if use_environ is True else val.strip()
             elif arg in mongo_user_variants:
-                mongo_user = val.strip()
+                mongo_user = os.environ[val.strip()] if use_environ is True else val.strip()
             elif arg in minio_endpoint_variants:
-                minio_endpoint = val.strip()
+                minio_endpoint = os.environ[val.strip()] if use_environ is True else val.strip()
             elif arg in minio_bucket_variants:
-                minio_bucket = val.strip()
+                minio_bucket = os.environ[val.strip()] if use_environ is True else val.strip()
             elif arg in minio_location_variants:
-                minio_location = val.strip()
+                minio_location = os.environ[val.strip()] if use_environ is True else val.strip()
     
     mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, conn_string, db, minio_endpoint, minio_bucket, minio_location )
     fp.close()
@@ -188,9 +188,10 @@ def file_parse(file) -> None:
 
 def main():
     argument_list = sys.argv[1:]
-    short_options = "f"
+    short_options = "fe"
     options = [
-            "file="
+            "file=",
+            "environment"
             ]
 
     try:
@@ -201,16 +202,20 @@ def main():
 
     # Declare variables for use later
     file = None
+    use_env = False
     # Loop through the arguments and assign them to our variables
     for curr_arg, curr_val in arguments:
         if curr_arg in ("-f", "--file"):
             file = curr_val
+        elif curr_arg in ("-e", "--environment"):
+            use_env = True
+
     if file is None:
         print('ERROR: Need input file')
         print('Usage example: python3 MongoBackup.py --file=credentials.txt')
     else:
         print('starting backup process...')
-        file_parse(file)
+        file_parse(file, use_env)
     
 # End main
 
