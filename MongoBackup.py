@@ -92,23 +92,14 @@ class MongoBackup:
         #logging.info('Backing up %s from %s to %s' % (db, hostname, output_dir))
 
         # Theres definitely a better way to do this
-        no_ssl = ['mongodump',
+        use_ssl = ['mongodump',
                 '--host', '%s' % self.host,
                 '--username', '%s' % self.user,
                 '--password', '%s' % self.password,
                 '--authenticationDatabase', 'admin',
                 '--db', '%s' % self.database_name,
-                '-o', '%s' % output_dir ]
-        with_ssl = ['mongodump',
-                '--host', '%s' % self.host,
-                '--username', '%s' % self.user,
-                '--password', '%s' % self.password,
-                '--ssl',
-                '--authenticationDatabase', 'admin',
-                '--db', '%s' % self.database_name,
-                '-o', '%s' % output_dir ]
-
-        use_ssl = with_ssl if self.ssl is True else  no_ssl
+                '-o', '%s' % output_dir]
+        use_ssl = use_ssl + ['--ssl'] if self.ssl is True else use_ssl
 
         backup_output = subprocess.check_output(use_ssl)
         logging.info(backup_output)
@@ -183,7 +174,6 @@ def file_parse(file, use_environ=False, ssl=False) -> None:
     mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, db, minio_endpoint, minio_bucket, minio_location, ssl=ssl )
     fp.close()
     mongo.backup_mongodump()
-    
 # End file_parse 
 
 def main():
