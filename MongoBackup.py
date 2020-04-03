@@ -19,6 +19,7 @@ import getopt
 import urllib
 import logging
 import shutil
+import time
 import pymongo
 from os import path, listdir, makedirs, devnull
 import subprocess
@@ -29,7 +30,7 @@ from subprocess import CalledProcessError, check_call
 
 slash_type = '\\' if os.name == 'nt' else '/'
 class MongoBackup:
-    def __init__(self, host, user, password, port, access_key, secret_key,  database_name, endpoint, bucket, location, ssl=False) -> None:
+    def __init__(self, host, user, password, port, access_key, secret_key,  database_name, endpoint, bucket, location, prefix=None, ssl=False, minio_ssl=False) -> None:
         self.host = host
         self.password = password
         self.port = port
@@ -41,6 +42,8 @@ class MongoBackup:
         self.database_name = str(database_name).strip()
         self.minio_endpoint = endpoint
         self.location = location
+        self.minio_ssl = minio_ssl
+        self.prefix = prefix
     # End __init__()
     
     def backup_to_minio(self):
@@ -48,7 +51,7 @@ class MongoBackup:
         minioClient = Minio(self.minio_endpoint.strip(),
                     access_key=self.access_key.strip(),
                     secret_key=self.secret_key.strip(),
-                    secure=True)
+                    secure=self.minio_ssl)
         try:
             minioClient.make_bucket(self.minio_bucket, location=self.location)
         except BucketAlreadyOwnedByYou as err:
@@ -67,9 +70,11 @@ class MongoBackup:
     # End backup_to_minio()
 
     def create_folder(self) -> None:
-        d = datetime.datetime.now().strftime('%m:%d:%Y')
+        d = str(int(time.time())) 
         path = os.getcwd()
-        path = path + slash_type + d + "_backup"
+        path = path + slash_type + self.database_name +  "_backup" + "_" + d
+        if self.prefix is not None:
+            path = os.getcwd() + slash_type + self.prefix + "_" + self.database_name + "_" + d
         self.backup_folder_path = path
         try:
             os.mkdir(self.backup_folder_path)
@@ -87,7 +92,7 @@ class MongoBackup:
 
         assert os.path.isdir(output_dir), 'Directory %s can\'t be found.' % output_dir
 
-        output_dir = os.path.abspath(os.path.join(output_dir, '%s__%s'% (self.database_name, today.strftime('%Y_%m_%d_%H%M%S'))))
+        output_dir = os.path.abspath(os.path.join(output_dir, '%s__%s'% (self.database_name, str(int(time.time())))))
 
         #logging.info('Backing up %s from %s to %s' % (db, hostname, output_dir))
 
@@ -114,13 +119,11 @@ def pairwise(iterable):
     Arguments:
         iterable {list} -- The input List
     """    
-
-    """ """
     a = iter(iterable)
     return zip(a, a)
 # End pairwise
 
-def file_parse(file, use_environ=False, ssl=False) -> None:
+def file_parse(file,  prefix, use_environ, ssl, use_prefix, minio_ssl) -> None:
     """Parses the given file (If applicable) """
 
     fp = open(file, 'r')
@@ -171,18 +174,20 @@ def file_parse(file, use_environ=False, ssl=False) -> None:
             elif arg in minio_location_variants:
                 minio_location = os.environ[val.strip()] if use_environ is True else val.strip()
     
-    mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, db, minio_endpoint, minio_bucket, minio_location, ssl=ssl )
+    mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, db, minio_endpoint, minio_bucket, minio_location, prefix, ssl=ssl, minio_ssl=minio_ssl )
     fp.close()
     mongo.backup_mongodump()
 # End file_parse 
 
 def main():
     argument_list = sys.argv[1:]
-    short_options = "fes"
+    short_options = "fesp"
     options = [
             "file=",
             "environment",
-            "ssl"
+            "ssl",
+            "prefix=",
+            "minioSSL"
             ]
 
     try:
@@ -195,6 +200,9 @@ def main():
     file = None
     use_env = False
     use_ssl = False
+    use_prefix = False
+    minio_ssl = False
+    prefix = ""
     # Loop through the arguments and assign them to our variables
     for curr_arg, curr_val in arguments:
         if curr_arg in ("-f", "--file"):
@@ -203,13 +211,19 @@ def main():
             use_env = True
         elif curr_arg in ("-s", "--ssl"):
             use_ssl = True
+        elif curr_arg in ('-p', "--prefix"):
+            use_prefix = True
+            prefix = curr_val
+        elif curr_arg in ("--minioSSL"):
+            minio_ssl = True
+
 
     if file is None:
         print('ERROR: Need input file')
         print('Usage example: python3 MongoBackup.py --file=credentials.txt')
     else:
         print('starting backup process...')
-        file_parse(file, use_env, use_ssl)
+        file_parse(file, prefix, use_env, use_ssl, use_prefix, minio_ssl)
     
 # End main
 

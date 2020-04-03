@@ -43,6 +43,9 @@ If you want to use environment variables instead of pasting your information in 
 
 If you want to connect to a DB with ssl enabled, pass in the ```-s``` or ```--ssl``` flags.
 
+If your Minio Server requires an SSL connection, pass in the ```--minioSSL``` flag.
+
+The generated zip folder will be named ```<database_name>_<backup>_<unix_timestamp>.zip```. To give the generated zip file a custom prefix pass in the ```--prefix=``` flag. For example, passing in ```--prefix=Paul``` will generate the output ```Paul_mydatabase_unixtimestamp.zip```
 ## Deployment
 
 This script is built to run on most unix systems. As long as you have a unix based terminal and mongodb tools installed you should be fine.
