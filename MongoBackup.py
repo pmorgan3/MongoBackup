@@ -92,7 +92,7 @@ class MongoBackup:
 
         assert os.path.isdir(output_dir), 'Directory %s can\'t be found.' % output_dir
 
-        output_dir = os.path.abspath(os.path.join(output_dir, '%s__%s'% (self.database_name, str(int(time.time())))))
+        output_dir = os.path.abspath(os.path.join(output_dir, '%s_%s'% (self.database_name, str(int(time.time())))))
 
         #logging.info('Backing up %s from %s to %s' % (db, hostname, output_dir))
 
@@ -216,7 +216,6 @@ def main():
             prefix = curr_val
         elif curr_arg in ("--minioSSL"):
             minio_ssl = True
-
 
     if file is None:
         print('ERROR: Need input file')
