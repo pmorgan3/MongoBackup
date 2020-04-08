@@ -75,6 +75,8 @@ class MongoBackup:
         path = path + slash_type + self.database_name +  "_backup" + "_" + d
         if self.prefix is not None:
             path = os.getcwd() + slash_type + self.prefix + "_" + self.database_name + "_" + d
+        else:
+            path = os.getcwd() + slash_type + self.database_name + "_" + d
         self.backup_folder_path = path
         try:
             os.mkdir(self.backup_folder_path)
