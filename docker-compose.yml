@@ -1,0 +1,40 @@
+version: '3'
+services:
+    backup: 
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: mongobackup
+        environment:
+            - MINIO_ACCESSKEY=accesskey
+            - MINIO_SECRETKEY=secretkey
+            - MINIO_ENDPOINT=minio:9000
+            - MINIO_BUCKET=testbucket
+            - MONGO_DATABASE=Testdb
+            - MONGO_PORT=27017
+            - MONGO_HOST=db:27017
+            - MONGO_USER=mongouser
+            - MONGO_PASSWORD=password
+            - ZIP_NAME=Testdb_1586543146.zip
+        volumes:
+            - ./config:/config
+        depends_on:
+            - minio
+            - db
+    minio:
+        image: minio/minio
+        command: server /data
+        environment:
+        - MINIO_ACCESS_KEY=accesskey
+        - MINIO_SECRET_KEY=secretkey
+        ports:
+        - 9000:9000
+    db:
+        image: mongo:4.2.2
+        environment:
+            - MONGO_INITDB_DATABASE=Testdb
+            - MONGO_INITDB_ROOT_USERNAME=mongouser
+            - MONGO_INITDB_ROOT_PASSWORD=password
+        command: --bind_ip_all
+        ports:
+            - 27017:27017
