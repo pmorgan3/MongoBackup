@@ -38,3 +38,38 @@ services:
         command: --bind_ip_all
         ports:
             - 27017:27017
+    dbui:
+        image: mongo-express
+        restart: always
+        ports:
+            - 8081
+        environment:
+            ME_CONFIG_MONGODB_ADMINUSERNAME: mongouser
+            ME_CONFIG_MONGODB_ADMINPASSWORD: password
+            ME_CONFIG_MONGODB_SERVER: db
+            ME_CONFIG_BASICAUTH_USERNAME: user
+            ME_CONFIG_BASICAUTH_PASSWORD: password
+        depends_on:
+            - db
+    restore: 
+        build:
+            context: .
+            dockerfile: Dockerfile.restore
+        image: mongorestore
+        environment:
+            - MINIO_ACCESSKEY=accesskey
+            - MINIO_SECRETKEY=secretkey
+            - MINIO_ENDPOINT=minio:9000
+            - MINIO_BUCKET=testbucket
+            - MONGO_DATABASE=Testdb
+            - MONGO_PORT=27017
+            - MONGO_HOST=db:27017
+            - MONGO_USER=mongouser
+            - MONGO_PASSWORD=password
+            - ZIP_NAME=Testdb_1586549041.zip
+        volumes:
+            - ./config:/config
+        depends_on:
+            - minio
+            - db
+

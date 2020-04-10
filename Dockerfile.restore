@@ -9,6 +9,6 @@ RUN apt-get install gnupg && wget -qO - https://www.mongodb.org/static/pgp/serve
 RUN echo "deb http://repo.mongodb.org/apt/debian buster/mongodb-org/4.2 main" | tee /etc/apt/sources.list.d/mongodb-org-4.2.list
 RUN apt-get update && apt-get install -y mongodb-org
 
-COPY MongoBackup.py MongoBackup.py
+COPY MongoRestore.py MongoRestore.py
 COPY credentials.env.txt credentials.txt
-CMD ["python3","MongoBackup.py","--file=credentials.txt","-e"  ]
+CMD ["python3","MongoRestore.py","--file=credentials.txt","-e"  ]
