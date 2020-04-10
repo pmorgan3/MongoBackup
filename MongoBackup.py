@@ -73,9 +73,10 @@ class MongoBackup:
         d = str(int(time.time())) 
         path = os.getcwd()
         path = path + slash_type + self.database_name +  "_backup" + "_" + d
-        if self.prefix is not None:
+        if self.prefix is not "":
             path = os.getcwd() + slash_type + self.prefix + "_" + self.database_name + "_" + d
         else:
+            print("no prefix")
             path = os.getcwd() + slash_type + self.database_name + "_" + d
         self.backup_folder_path = path
         try:
@@ -91,7 +92,8 @@ class MongoBackup:
             os.path.curdir,
             self.backup_folder_path
         ))
-
+        print("output_dir:", output_dir)
+        print("self.backup_folder_path:", self.backup_folder_path)
         assert os.path.isdir(output_dir), 'Directory %s can\'t be found.' % output_dir
 
         output_dir = os.path.abspath(os.path.join(output_dir, '%s_%s'% (self.database_name, str(int(time.time())))))
