@@ -11,8 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from minio import Minio
-from minio.error import (ResponseError, BucketAlreadyOwnedByYou, BucketAlreadyExists)
+
 import argparse
 import sys
 import getopt
@@ -21,16 +20,29 @@ import logging
 import shutil
 import time
 import pymongo
-from os import path, listdir, makedirs, devnull
 import subprocess
 import os
 import datetime
 from shlex import split as command_to_array
 from subprocess import CalledProcessError, check_call
+from zipfile import ZipFile
+from os import path, listdir, makedirs, devnull
+from minio import Minio
+from minio.error import (NoSuchKey, ResponseError, BucketAlreadyOwnedByYou, BucketAlreadyExists)
 
 slash_type = '\\' if os.name == 'nt' else '/'
+
+def pairwise(iterable):
+    """Returns every two elements in the given list
+    Arguments:
+        iterable {list} -- The input List
+    """    
+    a = iter(iterable)
+    return zip(a, a)
+# End pairwise
+
 class MongoBackup:
-    def __init__(self, host, user, password, port, access_key, secret_key,  database_name, endpoint, bucket, location, prefix=None, ssl=False, minio_ssl=False) -> None:
+    def __init__(self, host, user, password, port, access_key, secret_key,  database_name, endpoint, bucket, location, restore=False, zip_name="", prefix=None, ssl=False, minio_ssl=False) -> None:
         self.host = host
         self.password = password
         self.port = port
@@ -44,6 +56,8 @@ class MongoBackup:
         self.location = location
         self.minio_ssl = minio_ssl
         self.prefix = prefix
+        self.restore = restore
+        self.zip_name = zip_name.strip()
     # End __init__()
     
     def backup_to_minio(self):
@@ -68,6 +82,63 @@ class MongoBackup:
         print("Uploaded zip")
         print("Backup process complete. Have a nice day :)")
     # End backup_to_minio()
+
+    def has_prefix(self, filename: str, database_name: str) -> bool:
+        if filename.find(database_name) is 0:
+            return False
+        return True
+    # End has_prefix
+
+    def remove_prefix(self, folder_path: str, database_name: str) -> str:
+        return os.getcwd() + slash_type + folder_path[folder_path.find(database_name):]
+    # End remove_prefix
+
+    def restore_from_minio(self):
+        minioClient = Minio(self.minio_endpoint.strip(),
+                    access_key=self.access_key.strip(),
+                    secret_key=self.secret_key.strip(),
+                    secure=self.minio_ssl)
+        objects = minioClient.list_objects(self.minio_bucket)
+        try:
+            self.create_folder_restore() 
+            minioClient.fget_object(self.minio_bucket, self.zip_name, self.backup_folder_path)
+            with ZipFile(self.zip_name, 'r') as zipObj:
+                zipObj.extractall()
+            if self.has_prefix(self.zip_name, self.database_name):
+                self.backup_folder_path = self.remove_prefix(self.zip_name, self.database_name) 
+            os.chdir(self.backup_folder_path[:-4])
+            use_ssl = ['mongorestore',
+                '-d', '%s' % self.database_name,
+                '--host', '%s' % self.host,
+                '--username', '%s' % self.user,
+                '--password', '%s' % self.password,
+                '--authenticationDatabase', 'admin',
+                '%s' % self.database_name,
+                ]
+            use_ssl = use_ssl + ['--ssl'] if self.ssl is True else use_ssl
+    
+            restore_output = subprocess.check_output(use_ssl)
+            logging.info(restore_output)
+        except NoSuchKey as err:
+            print(err)
+            print("Seems like that file doesn't exist. Here are the objects currently in the bucket:")
+            for obj in objects:
+                print(obj.object_name)
+            quit
+    # End restore_from_minio()
+    def restore_mongodump(self):
+        self.restore_from_minio()
+
+    def create_folder_restore(self) -> None:
+        path = os.getcwd()
+        path = path + slash_type + self.zip_name
+        self.backup_folder_path = path
+        try:
+            f = open(self.zip_name, 'x')
+            f.close()
+        except Exception:
+            pass
+    # End create_folder_restore()
 
     def create_folder(self) -> None:
         d = str(int(time.time())) 
@@ -117,17 +188,7 @@ class MongoBackup:
     # End backup_mongodump()
 # End class
 
-def pairwise(iterable):
-    """Returns every two elements in the given list
-    
-    Arguments:
-        iterable {list} -- The input List
-    """    
-    a = iter(iterable)
-    return zip(a, a)
-# End pairwise
-
-def file_parse(file,  prefix, use_environ, ssl, use_prefix, minio_ssl) -> None:
+def file_parse(file,  prefix, use_environ, ssl, use_prefix, minio_ssl, _restore, zip_name) -> None:
     """Parses the given file (If applicable) """
 
     fp = open(file, 'r')
@@ -143,6 +204,7 @@ def file_parse(file,  prefix, use_environ, ssl, use_prefix, minio_ssl) -> None:
     minio_endpoint_variants = ["MinioEndpoint", "Endpoint", "minio_endpoint", "endpoint"]
     minio_bucket_variants = ["MinioBucket", "Bucket", "minio_bucket", "bucket", "BucketName"]
     minio_location_variants = ["MinioLocation", "minio_location", "location"]
+    zip_name_variants = ["Zip", "zipname", "zip name", "ZipName", "FolderName"]
 
     db = None
     access = None
@@ -152,6 +214,7 @@ def file_parse(file,  prefix, use_environ, ssl, use_prefix, minio_ssl) -> None:
     mongo_pass = None
     mongo_port = None
     minio_bucket = None
+    zip_name = ""
     minio_location = None
     minio_endpoint = None
     for line in fp:
@@ -177,10 +240,12 @@ def file_parse(file,  prefix, use_environ, ssl, use_prefix, minio_ssl) -> None:
                 minio_bucket = os.environ[val.strip()] if use_environ is True else val.strip()
             elif arg in minio_location_variants:
                 minio_location = os.environ[val.strip()] if use_environ is True else val.strip()
+            elif arg in zip_name_variants:
+                zip_name = os.environ[val.strip()] if use_environ is True else val.strip()
     
-    mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, db, minio_endpoint, minio_bucket, minio_location, prefix, ssl=ssl, minio_ssl=minio_ssl )
+    mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, db, minio_endpoint, minio_bucket, minio_location, restore=_restore, zip_name=zip_name, prefix=prefix,ssl=ssl, minio_ssl=minio_ssl )
     fp.close()
-    mongo.backup_mongodump()
+    mongo.backup_mongodump() if _restore is False else mongo.restore_mongodump()
 # End file_parse 
 
 def main():
@@ -191,7 +256,8 @@ def main():
             "environment",
             "ssl",
             "prefix=",
-            "minioSSL"
+            "minioSSL",
+            "zip="
             ]
 
     try:
@@ -206,7 +272,9 @@ def main():
     use_ssl = False
     use_prefix = False
     minio_ssl = False
+    restore = False
     prefix = ""
+    zip_name = ""
     # Loop through the arguments and assign them to our variables
     for curr_arg, curr_val in arguments:
         if curr_arg in ("-f", "--file"):
@@ -220,13 +288,17 @@ def main():
             prefix = curr_val
         elif curr_arg in ("--minioSSL"):
             minio_ssl = True
+        elif curr_arg in ("-r", "--restore"):
+            restore = True
+        elif curr_arg in ("-z", "--zip"):
+            zip_name = curr_val
 
     if file is None:
         print('ERROR: Need input file')
         print('Usage example: python3 MongoBackup.py --file=credentials.txt')
     else:
         print('starting backup process...')
-        file_parse(file, prefix, use_env, use_ssl, use_prefix, minio_ssl)
+        file_parse(file, prefix, use_env, use_ssl, use_prefix, minio_ssl, restore, zip_name)
     
 # End main
 

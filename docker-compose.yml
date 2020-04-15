@@ -15,7 +15,7 @@ services:
             - MONGO_HOST=db:27017
             - MONGO_USER=mongouser
             - MONGO_PASSWORD=password
-            - ZIP_NAME=Testdb_1586543146.zip
+            - ZIP_NAME=zip_name.zip
         volumes:
             - ./config:/config
         depends_on:

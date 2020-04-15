@@ -23,7 +23,6 @@ from zipfile import ZipFile
 slash_type = '\\' if os.name == 'nt' else '/'
 def pairwise(iterable):
     """Returns every two elements in the given list
-    
     Arguments:
         iterable {list} -- The input List
     """    

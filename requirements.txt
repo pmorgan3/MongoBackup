@@ -1,2 +1,2 @@
-pymongo==3.10.1
 minio==5.0.8
+pymongo==3.10.1
