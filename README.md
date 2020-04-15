@@ -41,6 +41,8 @@ Password=mongo_admin_password
 
 If you want to use environment variables instead of pasting your information in plain text, run the script using the ```-e``` or  ```--environment``` flags. And have your credentials.txt file store your variable names instead of their values. 
 
+If you want to restore from an existing backup, pass in the ```-r``` or ```--restore``` flags. Make sure that ```ZipName``` is present in your credentials file and it is set to the name of the Zip you want to restore from.
+
 If you want to connect to a DB with ssl enabled, pass in the ```-s``` or ```--ssl``` flags.
 
 If your Minio Server requires an SSL connection, pass in the ```--minioSSL``` flag.
