@@ -250,7 +250,7 @@ def file_parse(file,  prefix, use_environ, ssl, use_prefix, minio_ssl, _restore,
 
 def main():
     argument_list = sys.argv[1:]
-    short_options = "fesp"
+    short_options = "fespr"
     options = [
             "file=",
             "environment",
@@ -297,7 +297,7 @@ def main():
         print('ERROR: Need input file')
         print('Usage example: python3 MongoBackup.py --file=credentials.txt')
     else:
-        print('starting backup process...')
+        print('starting backup process...') if restore is False else print('starting restore process...')
         file_parse(file, prefix, use_env, use_ssl, use_prefix, minio_ssl, restore, zip_name)
     
 # End main
