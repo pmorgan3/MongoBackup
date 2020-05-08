@@ -9,8 +9,8 @@ FROM python:3.7.7-buster
 COPY --from=builder /usr/bin/mongorestore /usr/bin/
 COPY --from=builder /usr/bin/mongodump /usr/bin/
 ENV PYTHONUNBUFFERED=1
-RUN pip3 install -r requirements.txt
 COPY requirements.txt requirements.txt
 COPY MongoBackup.py MongoBackup.py
+RUN pip3 install -r requirements.txt
 COPY credentials.env.txt credentials.txt
 CMD ["python3","MongoBackup.py","--file=credentials.txt","-e"  ]
