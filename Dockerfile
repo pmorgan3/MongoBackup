@@ -1,7 +1,9 @@
-FROM ubuntu as builder
+FROM python:3.7.7-buster
 RUN apt-get install gnupg && wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add -
 RUN echo "deb http://repo.mongodb.org/apt/debian buster/mongodb-org/4.2 main" | tee /etc/apt/sources.list.d/mongodb-org-4.2.list
 RUN apt-get update && apt-get install -y mongodb-org
+RUN which mongorestore
+RUN which mongodump
 
 FROM python:3.7.7-buster  
 COPY --from=builder /usr/bin/mongorestore /usr/bin/
