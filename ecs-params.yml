@@ -1,9 +1,9 @@
 version: 1
 task_definition:
     services:
-        mongo-backup:
+        backup:
             cpu_shares: 128
             mem_limit: 128
-        mongo-restore:
+        restore:
             cpu_shares: 128
             mem_limit: 128
