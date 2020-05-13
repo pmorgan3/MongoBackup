@@ -1,0 +1,21 @@
+version: '3'
+services:
+    restore: 
+        build:
+            context: .
+            dockerfile: Dockerfile.restore
+        image: pmorgan3/mongobackupminio:restore
+        environment:
+            - MINIO_ACCESSKEY=accesskey
+            - MINIO_SECRETKEY=secretkey
+            - MINIO_ENDPOINT=minio:9000
+            - MINIO_BUCKET=testbucket
+            - MONGO_DATABASE=Testdb
+            - MONGO_PORT=27017
+            - MONGO_HOST=db:27017
+            - MONGO_USER=mongouser
+            - MONGO_PASSWORD=password
+            - ZIP_NAME=Testdb_1586549041.zip
+        volumes:
+            - ./config:/config
+
