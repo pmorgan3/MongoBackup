@@ -19,3 +19,9 @@ services:
         volumes:
             - ./config:/config
 
+        logging:
+            driver: awslogs
+            options:
+                awslogs-group: ecs-development
+                awslogs-region: us-east-1
+                awslogs-stream-prefix: mongo-restore

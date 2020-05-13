@@ -8,3 +8,9 @@ services:
         - MINIO_SECRET_KEY=secretkey
         ports:
         - 9000:9000
+        logging:
+            driver: awslogs
+            options:
+                awslogs-group: ecs-development
+                awslogs-region: us-east-1
+                awslogs-stream-prefix: minio-backup

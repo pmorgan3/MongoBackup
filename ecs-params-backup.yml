@@ -5,4 +5,4 @@ task_definition:
     services:
         backup:
             cpu_shares: 128
-            mem_limit: 128
+            mem_reservation: 128
