@@ -1,0 +1,35 @@
+version: '3'
+services:
+    backup-mongodb:
+        image: mongo:4.2.2
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=mongouser
+            - MONGO_INITDB_ROOT_PASSWORD=password
+        command: --bind_ip_all
+        ports:
+            - 27017
+        logging:
+            driver: awslogs
+            options:
+                awslogs-group: mongobackup
+                awslogs-region: us-east-1
+                awslogs-stream-prefix: mongodb
+    backup-mongodb-ui:
+        image: mongo-express
+        restart: always
+        ports:
+            - 8081
+        environment:
+            ME_CONFIG_MONGODB_ADMINUSERNAME: mongouser
+            ME_CONFIG_MONGODB_ADMINPASSWORD: password
+            ME_CONFIG_MONGODB_SERVER: db
+            ME_CONFIG_BASICAUTH_USERNAME: user
+            ME_CONFIG_BASICAUTH_PASSWORD: password
+        depends_on:
+            - db
+        logging:
+            driver: awslogs
+            options:
+                awslogs-group: mongobackup
+                awslogs-region: us-east-1
+                awslogs-stream-prefix: mongodb-ui
