@@ -179,6 +179,7 @@ class MongoBackup:
                 '--password', '%s' % self.password,
                 '--authenticationDatabase', 'admin',
                 '--db', '%s' % self.database_name,
+                '-vvv',
                 '-o', '%s' % output_dir]
         use_ssl = use_ssl + ['--ssl'] if self.ssl is True else use_ssl
         use_ssl = use_ssl + ['-vvv'] if self.verbose is True else use_ssl
@@ -259,7 +260,7 @@ def file_parse(file,  prefix, use_environ, ssl, use_prefix, minio_ssl, _restore,
                     use_ssl = os.environ[val.strip()] == "True"
 
     
-    mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, db, minio_endpoint, minio_bucket, minio_location, restore=_restore, zip_name=zip_name, prefix=prefix,ssl=use_ssl, minio_ssl=minio_ssl )
+    mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, db, minio_endpoint, minio_bucket, minio_location, restore=_restore, zip_name=zip_name, prefix=prefix,ssl=use_ssl, minio_ssl=minio_ssl, verbose=verbose)
     fp.close()
     mongo.backup_mongodump() if _restore is False else mongo.restore_mongodump()
 # End file_parse 
