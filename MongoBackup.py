@@ -174,7 +174,8 @@ class MongoBackup:
 
         # Theres definitely a better way to do this
         use_ssl = ['mongodump',
-                '--host', '%s' % self.host,
+                '--host', '%s' % self.host, '--port', 
+                '%s' % self.port,
                 '--username', '%s' % self.user,
                 '--password', '%s' % self.password,
                 '--authenticationDatabase', 'admin',
@@ -182,7 +183,6 @@ class MongoBackup:
                 '-vvv',
                 '-o', '%s' % output_dir]
         use_ssl = use_ssl + ['--ssl'] if self.ssl is True else use_ssl
-        use_ssl = use_ssl + ['--port', '%s' % self.port] if self.port
         use_ssl = use_ssl + ['-vvv'] if self.verbose is True else use_ssl
         backup_output = subprocess.check_output(use_ssl)
         logging.info(backup_output)
