@@ -111,6 +111,7 @@ class MongoBackup:
             use_ssl = ['mongorestore',
                 '-d', '%s' % self.database_name,
                 '--host', '%s' % self.host,
+                '--port', '%s' % self.port,
                 '--username', '%s' % self.user,
                 '--password', '%s' % self.password,
                 '--authenticationDatabase', 'admin',
