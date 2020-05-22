@@ -42,7 +42,7 @@ def pairwise(iterable):
 # End pairwise
 
 class MongoBackup:
-    def __init__(self, host, user, password, port, access_key, secret_key,  database_name, endpoint, bucket, location, restore=False, zip_name="", prefix=None, ssl=False, minio_ssl=False, verbose=False) -> None:
+    def __init__(self, host, user, password, port, access_key, secret_key,  database_name, endpoint, bucket, location, restore=False, zip_name="", prefix=None, ssl=False, minio_ssl=False, verbose=False, root_path=None) -> None:
         self.host = host
         self.password = password
         self.port = port
@@ -59,6 +59,7 @@ class MongoBackup:
         self.restore = restore
         self.zip_name = zip_name.strip()
         self.verbose = verbose
+        self.root_path = root_path
     # End __init__()
     
     def backup_to_minio(self):
@@ -77,8 +78,9 @@ class MongoBackup:
             raise
 
         try:
-            minioClient.fput_object(self.minio_bucket, self.zip_name, self.zip_name)
+            minioClient.fput_object(self.minio_bucket + self.path if self.path is not None else self.minio_bucket, self.zip_name, self.zip_name)
         except ResponseError as err:
+            print("You're in the error zone")
             print(err)
         print("Uploaded zip")
         print("Backup process complete. Have a nice day :)")
@@ -210,6 +212,7 @@ def file_parse(file,  prefix, use_environ, ssl, use_prefix, minio_ssl, _restore,
     zip_name_variants = ["Zip", "zipname", "zip name", "ZipName", "FolderName"]
     verbose_variants = ["Verbose", "verbose"]
     ssl_variants = ["ssl", "SSL"]
+    root_path_variants = ["path", "Path", "root", "Root", "root_path", "RootPath"]
 
     db = None
     access = None
@@ -222,6 +225,7 @@ def file_parse(file,  prefix, use_environ, ssl, use_prefix, minio_ssl, _restore,
     zip_name = ""
     minio_location = None
     minio_endpoint = None
+    minio_root_path = None
     use_ssl = False
     verbose = False
     for line in fp:
@@ -259,9 +263,11 @@ def file_parse(file,  prefix, use_environ, ssl, use_prefix, minio_ssl, _restore,
                     use_ssl = val.strip() == "True"
                 else:
                     use_ssl = os.environ[val.strip()] == "True"
+            elif arg in root_path_variants:
+                minio_root_path = os.environ[val.strip()] if use_environ is True else val.strip()
 
     
-    mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, db, minio_endpoint, minio_bucket, minio_location, restore=_restore, zip_name=zip_name, prefix=prefix,ssl=use_ssl, minio_ssl=minio_ssl, verbose=verbose)
+    mongo = MongoBackup(mongo_host, mongo_user, mongo_pass, mongo_port, access, secret, db, minio_endpoint, minio_bucket, minio_location, restore=_restore, zip_name=zip_name, prefix=prefix,ssl=use_ssl, minio_ssl=minio_ssl, verbose=verbose, root_path=minio_root_path)
     fp.close()
     mongo.backup_mongodump() if _restore is False else mongo.restore_mongodump()
 # End file_parse 
