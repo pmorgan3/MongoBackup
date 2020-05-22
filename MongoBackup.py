@@ -78,7 +78,7 @@ class MongoBackup:
             raise
 
         try:
-            minioClient.fput_object(self.minio_bucket + self.path if self.path is not None else self.minio_bucket, self.zip_name, self.zip_name)
+            minioClient.fput_object(self.minio_bucket, (self.root_path + self.zip_name )if self.root_path is not None else self.zip_name, self.zip_name)
         except ResponseError as err:
             print("You're in the error zone")
             print(err)
@@ -177,14 +177,17 @@ class MongoBackup:
 
         # Theres definitely a better way to do this
         use_ssl = ['mongodump',
-                '--host', '%s' % self.host, '--port', 
-                '%s' % self.port,
-                '--username', '%s' % self.user,
-                '--password', '%s' % self.password,
+                '--host', '%s' % self.host]
+                
+        if self.port != None:
+            use_ssl.extend(['--port', '%s' % self.port])
+        
+        use_ssl.extend(['--username', '%s' % self.user,
+        '--password', '%s' % self.password,
                 '--authenticationDatabase', 'admin',
                 '--db', '%s' % self.database_name,
                 '-vvv',
-                '-o', '%s' % output_dir]
+                '-o', '%s' % output_dir])
         use_ssl = use_ssl + ['--ssl'] if self.ssl is True else use_ssl
         use_ssl = use_ssl + ['-vvv'] if self.verbose is True else use_ssl
         backup_output = subprocess.check_output(use_ssl)
@@ -227,7 +230,7 @@ def file_parse(file,  prefix, use_environ, ssl, use_prefix, minio_ssl, _restore,
     minio_location = None
     minio_endpoint = None
     minio_root_path = None
-    use_ssl = False
+    use_ssl = ssl
     verbose = False
     for line in fp:
         arg_list = line.split('=', 1)
