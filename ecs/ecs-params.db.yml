@@ -1,0 +1,12 @@
+version: 1
+task_definition:
+    task_execution_role: ecsTaskExecutionRole
+    ecs_network_mode: bridge
+    services:
+        backup-mongodb:
+            cpu_shares: 128
+            mem_reservation: 128
+
+        backup-mongodb-ui:
+            cpu_shares: 128
+            mem_reservation: 128
