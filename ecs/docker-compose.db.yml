@@ -33,3 +33,26 @@ services:
                 awslogs-group: mongobackup
                 awslogs-region: us-east-1
                 awslogs-stream-prefix: mongodb-ui
+        version: "3.3"
+    traefik:
+      image: traefik:v2.2
+      container_name: traefik
+      command:
+        - --log.level=DEBUG
+        - --api.insecure=true
+        - --providers.docker=true
+        - --providers.docker.exposedbydefault=true
+        - --entrypoints.web.address=:80
+      ports:
+        - 80:80
+        - 8080:8080
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+    mongo:
+      image: mongodb
+      labels:
+        - traefik.enable=true
+        - traefik.tcp.routers.mongodb.rule=HostSNI(`mongodb.localhost`)
+        - traefik.tcp.routers.mongodb.tls.passthrough=true
+      ports:
+        - 27017
