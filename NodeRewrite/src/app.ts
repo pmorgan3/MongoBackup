@@ -55,6 +55,7 @@ execSync(zip_string)
 
 let minio_object_name = Backup.MinioRootPath !== undefined ? Backup.MinioRootPath + output_name : output_name
 minio_object_name += '.zip'
+let unzipped = output_name
 output_name += '.zip'
 
 // Now we have to make a filestream from the output
@@ -72,5 +73,5 @@ let fileStat = fs.stat(output_name, (err, stats) => {
 })
 
 // Clean up
-const clean_up_string = `rm -rf ${output_name}`
+const clean_up_string = `rm -rf ${output_name} ${unzipped}`
 execSync(clean_up_string)
