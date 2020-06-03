@@ -1,8 +1,9 @@
 require('dotenv').config
 import { MongoBackupType } from './types'
 import * as Minio from 'minio'
-import { execSync } from 'child_process'
+import { execSync} from 'child_process'
 import * as fs from 'fs'
+import * as request from 'request'
 // This is the instance of the object that all actions will be
 // preformed on
 const Backup: MongoBackupType = {
@@ -21,6 +22,7 @@ const Backup: MongoBackupType = {
   UseSSL: process.env.USE_SSL==='true',
   MinioSSL: process.env.MINIO_SSL==='true'
 }
+const webhook_url = process.env.SLACK_WEBHOOK_URL
 // Minio client object
 let client_obj: Minio.ClientOptions = {
   endPoint: Backup.MinioEndpoint,
@@ -60,7 +62,12 @@ let filestream = fs.createReadStream(output_name)
 let fileStat = fs.stat(output_name, (err, stats) => {
   // And send that stream to minio
   client.putObject(Backup.MinioBucket, minio_object_name, filestream, stats.size, (err, etag) => {
-      return console.log(err, etag)
+      console.log(err, etag)
+      request.post(webhook_url, {
+        json: {
+          text: `Backed up ${Backup.Database} to minio.\n\n OutputName: ${output_name}\n\nRoot Path: ${Backup.MinioRootPath ? Backup.MinioRootPath : Backup.MinioBucket + '/'}`
+        }
+      })
   })
 })
 
