@@ -3,6 +3,8 @@ import { MongoBackupType } from './types'
 import * as Minio from 'minio'
 import { execSync} from 'child_process'
 import * as fs from 'fs'
+import * as winston from 'winston'
+import * as SlackHook from 'winston-slack-webhook-transport'
 import * as request from 'request'
 // This is the instance of the object that all actions will be
 // preformed on
@@ -23,9 +25,18 @@ const Backup: MongoBackupType = {
   MinioSSL: process.env.MINIO_SSL==='true'
 }
 const webhook_url = process.env.SLACK_WEBHOOK_URL
+const logger = winston.createLogger({
+  level: 'info',
+  transports: [
+    new SlackHook({
+      webhookUrl: webhook_url
+    })
+  ]
+})
 // Minio client object
 let client_obj: Minio.ClientOptions = {
   endPoint: Backup.MinioEndpoint,
+  //port: Backup.MinioPort,
   useSSL: Backup.MinioSSL,
   accessKey: Backup.MinioAccessKey,
   secretKey: Backup.MinioSecretKey
@@ -35,11 +46,16 @@ let client_obj: Minio.ClientOptions = {
 if(Backup.MinioPort !== 0){
   client_obj = { ...client_obj, port: Backup.MinioPort}
 }
-let client = new Minio.Client({
-  endPoint: Backup.MinioEndpoint,
-  useSSL: Backup.MinioSSL,
-  accessKey: Backup.MinioAccessKey,
-  secretKey: Backup.MinioSecretKey
+let client = new Minio.Client({...client_obj})
+// Now we check if the bucket exists
+client.bucketExists(Backup.MinioBucket, (err, exists) => {
+  if(exists === false){
+    client.makeBucket(Backup.MinioBucket, 'us-east-1', (error)=> {
+      logger.error(error.message, ()=> {
+        
+      })
+    })
+  }
 })
 let output_name = Backup.Database + '_' + Date.now()
 
@@ -64,11 +80,10 @@ let fileStat = fs.stat(output_name, (err, stats) => {
   // And send that stream to minio
   client.putObject(Backup.MinioBucket, minio_object_name, filestream, stats.size, (err, etag) => {
       console.log(err, etag)
-      request.post(webhook_url, {
-        json: {
-          text: `Backed up ${Backup.Database} to minio.\n\n OutputName: ${output_name}\n\nRoot Path: ${Backup.MinioRootPath ? Backup.MinioRootPath : Backup.MinioBucket + '/'}`
-        }
-      })
+       if(err){
+        logger.error(err.message)
+      }
+      else{  logger.info(`Backed up ${Backup.Database} to minio.\n\n OutputName: ${output_name}\n\nRoot Path: ${Backup.MinioRootPath ? Backup.MinioRootPath : Backup.MinioBucket + '/'}`)}
   })
 })
 

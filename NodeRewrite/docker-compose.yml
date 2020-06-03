@@ -1,0 +1,57 @@
+version: '3'
+services: 
+    node-backup:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: pmorgan3/mongobackupminio:node
+        environment: 
+            - DATABASE=Testdb
+            - MONGO_HOST=db
+            - MONGO_PORT=27017
+            - MONGO_USER=mongouser
+            - MONGO_PASSWORD=password
+            - MINIO_ENDPOINT=172.18.0.2
+            - MINIO_PORT=9000
+            - MINIO_ACCESS=accesskey
+            - MINIO_SECRET=secretkey
+            - MINIO_BUCKET=testbucket
+            - MINIO_ROOT_PATH=testpath/supertest/
+            - USE_SSL=false
+            - MINIO_SSL=false
+            - SLACK_WEBHOOK_URL=https://hooks.slack.com/services/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
+        volumes:
+            - ./config:/config
+        depends_on:
+            - minio
+            - db
+    minio:
+        image: minio/minio
+        command: server /data
+        environment:
+        - MINIO_ACCESS_KEY=accesskey
+        - MINIO_SECRET_KEY=secretkey
+        ports:
+        - 9000:9000
+    db:
+        image: mongo:4.2.2
+        environment:
+            - MONGO_INITDB_DATABASE=Testdb
+            - MONGO_INITDB_ROOT_USERNAME=mongouser
+            - MONGO_INITDB_ROOT_PASSWORD=password
+        command: --bind_ip_all
+        ports:
+            - 27017:27017
+    dbui:
+        image: mongo-express
+        restart: always
+        ports:
+            - 8081
+        environment:
+            ME_CONFIG_MONGODB_ADMINUSERNAME: mongouser
+            ME_CONFIG_MONGODB_ADMINPASSWORD: password
+            ME_CONFIG_MONGODB_SERVER: db
+            ME_CONFIG_BASICAUTH_USERNAME: user
+            ME_CONFIG_BASICAUTH_PASSWORD: password
+        depends_on:
+            - db
