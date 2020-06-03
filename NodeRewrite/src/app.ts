@@ -2,6 +2,7 @@ require('dotenv').config
 import { MongoBackupType } from './types'
 import * as Minio from 'minio'
 import { execSync } from 'child_process'
+import * as fs from 'fs'
 // This is the instance of the object that all actions will be
 // preformed on
 const Backup: MongoBackupType = {
@@ -14,7 +15,7 @@ const Backup: MongoBackupType = {
   MinioAccessKey: process.env.MINIO_ACCESS,
   MinioSecretKey: process.env.MINIO_SECRET,
   MinioBucket: process.env.MINIO_BUCKET,
-  MinioPort: +process.env.MINIO_PORT,
+  MinioPort: +process.env.MINIO_PORT, // +null === 0
   ZipName: process.env.ZIP_NAME,
   MinioRootPath: process.env.MINIO_ROOT_PATH,
   UseSSL: process.env.USE_SSL==='true',
@@ -38,10 +39,10 @@ let client = new Minio.Client({
   accessKey: Backup.MinioAccessKey,
   secretKey: Backup.MinioSecretKey
 })
-const output_name = Backup.Database + '_' + Date.now()
+let output_name = Backup.Database + '_' + Date.now()
 
 // Call mongodump
-const exec_string = `mongodump --host ${Backup.MongoHost} --port ${Backup.MongoPort} -vvvv --username ${Backup.MongoUser} --password ${Backup.MongoPass} --db ${Backup.Database} --authenticationDatabase admin --out ${output_name} ${Backup.UseSSL ? '--ssl' : ''}`
+const exec_string = `mongodump --host ${Backup.MongoHost} --port ${Backup.MongoPort} --forceTableScan -vvvv --username ${Backup.MongoUser} --password ${Backup.MongoPass} --db ${Backup.Database} --authenticationDatabase admin --out ${output_name} ${Backup.UseSSL ? '--ssl' : ''}`
 
 //exec mongodump
 execSync(exec_string)
@@ -50,10 +51,17 @@ execSync(exec_string)
 const zip_string = `zip -r ${output_name}.zip ${output_name}`
 execSync(zip_string)
 
-let minio_object_name = Backup.MinioRootPath === undefined ? Backup.MinioRootPath + output_name : output_name
+let minio_object_name = Backup.MinioRootPath !== undefined ? Backup.MinioRootPath + output_name : output_name
+minio_object_name += '.zip'
+output_name += '.zip'
 
-client.putObject(Backup.MinioBucket, minio_object_name, output_name + '.zip').catch((err) => {
-  console.log(err)
+// Now we have to make a filestream from the output
+let filestream = fs.createReadStream(output_name)
+let fileStat = fs.stat(output_name, (err, stats) => {
+  // And send that stream to minio
+  client.putObject(Backup.MinioBucket, minio_object_name, filestream, stats.size, (err, etag) => {
+      return console.log(err, etag)
+  })
 })
 
 // Clean up
