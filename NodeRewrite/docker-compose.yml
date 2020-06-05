@@ -17,9 +17,9 @@ services:
             - MINIO_SECRET=secretkey
             - MINIO_BUCKET=testbucket
             - MINIO_ROOT_PATH=testpath/supertest/
-            - USE_SSL=false
+            - MONGO_SSL=false
             - MINIO_SSL=false
-            - SLACK_WEBHOOK_URL=https://hooks.slack.com/services/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
+            - SLACK_WEBHOOK_URL=https://hooks.slack.com/services/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
         volumes:
             - ./config:/config
         depends_on:

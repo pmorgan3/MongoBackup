@@ -1,4 +1,4 @@
-export interface MongoBackupType {
+export interface MongoBackupConfig {
   Database: string;
   MongoHost: string;
   MongoPort: string;
@@ -7,10 +7,11 @@ export interface MongoBackupType {
   MinioEndpoint: string;
   MinioAccessKey: string;
   MinioSecretKey: string;
-  UseSSL: boolean;
+  MongoSSL: boolean;
   ZipName?: string;
   MinioRootPath?: string;
   MinioBucket: string;
   MinioSSL: boolean;
   MinioPort?: number;
+  WebhookURL: string;
 }
