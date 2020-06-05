@@ -12,7 +12,7 @@ npm i mongobackupminio
 ## Usage
 
 ```typescript
-import * from 'mongobackupminio'
+import * from 'mongo-backup-minio'
 
 const config: MongoBackupConfig = {
   Database: string;
