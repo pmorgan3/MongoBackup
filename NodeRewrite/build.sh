@@ -1,2 +1,0 @@
-#! /usr/bin/sh
-docker build --pull --rm -f "NodeRewrite/Dockerfile.node" -t mongobackupminio:node "NodeRewrite" --build-arg DATABASE --build-arg MONGO_HOST --build-arg MONGO_PORT --build-arg MONGO_USER --build-arg MONGO_PASSWORD --build-arg MINIO_ENDPOINT --build-arg MINIO_ACCESS --build-arg MINIO_SECRET --build-arg MINIO_BUCKET --build-arg MINIO_PORT --build-arg MINIO_ROOT_PATH --build-arg USE_SSL --build-arg MINIO_SSL --build-arg SLACK_WEBHOOK_URL

@@ -4,7 +4,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-        image:  pmorgan3/mongobackupminio:backup
+        image:  pmorgan3/mongobackupminio:node
         environment:
             - MINIO_ACCESSKEY=accesskey
             - MINIO_SECRETKEY=secretkey

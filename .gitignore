@@ -1,1 +1,3 @@
 testdata.txt
+/ecs/
+./node_modules/**

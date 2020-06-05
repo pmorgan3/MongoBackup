@@ -1,0 +1,28 @@
+{
+  "name": "mongo-backup",
+  "version": "1.0.0",
+  "description": "mongo-backup rewritten in NodeJS",
+  "main": "dist/index.js",
+  "bin": "dist/cli.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "minio": "^7.0.16",
+    "request": "^2.88.2",
+    "winston": "^3.2.1",
+    "winston-slack-webhook-transport": "^1.2.4"
+  },
+  "devDependencies": {
+    "typescript": "^3.9.3",
+    "ts-node": "^8.10.2",
+    "@types/dotenv": "^8.2.0",
+    "@types/minio": "^7.0.5",
+    "@types/node": "^14.0.5"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare" : "npm run build",
+    "start": "ts-node src/app.ts"
+  }
+}
