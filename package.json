@@ -1,9 +1,11 @@
 {
-  "name": "mongo-backup-minio",
-  "version": "1.0.0",
+  "name": "@webitects/mongo-backup-minio",
+  "version": "1.0.4",
   "description": "mongo-backup rewritten in NodeJS",
   "main": "dist/index.js",
-  "bin": "dist/cli.js",
+  "bin": {
+    "mongo-backup-minio": "dist/cli.js"
+  },
   "types": "dist/index.d.ts",
   "license": "MIT",
   "dependencies": {
@@ -26,5 +28,14 @@
     "build": "tsc",
     "prepare": "npm run build",
     "start": "ts-node src/app.ts"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmorgan3/MongoBackup.git"
+  },
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/pmorgan3/MongoBackup/issues"
+  },
+  "homepage": "https://github.com/pmorgan3/MongoBackup#readme"
 }
