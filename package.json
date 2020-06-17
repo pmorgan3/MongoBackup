@@ -1,7 +1,8 @@
 {
   "name": "@webitects/mongo-backup-minio",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "mongo-backup rewritten in NodeJS",
+  "author": "Paul Morgan III",
   "main": "dist/index.js",
   "bin": {
     "mongo-backup-minio": "dist/cli.js"
@@ -33,7 +34,6 @@
     "type": "git",
     "url": "git+https://github.com/pmorgan3/MongoBackup.git"
   },
-  "author": "",
   "bugs": {
     "url": "https://github.com/pmorgan3/MongoBackup/issues"
   },

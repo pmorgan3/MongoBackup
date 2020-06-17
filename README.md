@@ -6,7 +6,7 @@ MongoBackupMinio is a nodejs package that allows you to backup Mongo databases t
 
 Then run
 ```bash
-npm i mongobackupminio
+npm i mongo-backup-minio
 ```
 
 ## Usage
@@ -36,6 +36,12 @@ const backup = new MongoBackup(config)
 backup.createBackup()
 backup.uploadBackup()
 ```
+
+## CLI usage
+To use this as a CLI tool, install the package globally.
+
+Then run `npx mongo-backup-minio` to see the list of required arguments
+
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
