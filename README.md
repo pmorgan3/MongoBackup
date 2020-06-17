@@ -59,6 +59,7 @@ Then run `npx mongo-backup-minio` with the following options:
 --slack-hook        The webhook used with slack integration
 ```
 
+So an example use would be `npx mongo-backup-minio --host=<database-host> --database=<database-name> --mongo-port=27017 --mongo-user=user --mongo-pass=password --minio-endpoint=min.io --accesskey=access --secretkey=secret --mongo-ssl=true --minio-bucket=bucket --minio-port=4000`
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
