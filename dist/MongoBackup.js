@@ -137,48 +137,109 @@ var MongoBackup = /** @class */ (function () {
         child_process_1.execSync(clean_up_string);
     };
     // Change the names of the env variables
+    /**
+     * set the name of the ENV variable corresponding to your DB name
+     * @param db_var The name of your env variable corresponding to the name of your DB
+     */
     MongoBackup.prototype.setDatabaseVar = function (db_var) {
         this.Database = process.env[db_var];
     };
+    /**
+     * set the name of the ENV variable corresponding to your DB host
+     * @param host_var The name of your env variable corresponding to your DB host
+     */
     MongoBackup.prototype.setMongoHostVar = function (host_var) {
         this.MongoHost = process.env[host_var];
     };
+    /**
+     * set the name of the ENV variable corresponding to your DB port
+     * @param port_var The name of your env variable corresponding to the port of your DB
+     */
     MongoBackup.prototype.setMongoPortVar = function (port_var) {
         this.MongoPort = process.env[port_var];
     };
+    /**
+    * set the name of the ENV variable corresponding to your DB user
+    * @param user_var The name of your env variable corresponding to your DB user
+    */
     MongoBackup.prototype.setMongoUserVar = function (user_var) {
         this.MongoUser = process.env[user_var];
     };
+    /**
+     * set the name of the ENV variable corresponding to your DB password
+     * @param pass_var The name of your env variable corresponding to the password of your DB user
+     */
     MongoBackup.prototype.setMongoPassVar = function (pass_var) {
         this.MongoPass = process.env[pass_var];
     };
+    /**
+     * set the name of the ENV variable corresponding to your minio endpoint
+     * @param end_var The name of your env variable corresponding to your minio endpoint
+     */
     MongoBackup.prototype.setMinioEndpointVar = function (end_var) {
         this.MinioEndpoint = process.env[end_var];
     };
+    /**
+     * set the name of the ENV variable corresponding to your minio access key
+     * @param key_var The name of your env variable corresponding to your minio access key
+     */
     MongoBackup.prototype.setMinioAccessKeyVar = function (key_var) {
         this.MinioAccessKey = process.env[key_var];
     };
+    /**
+     * set the name of the ENV variable corresponding to your minio secret key
+     * @param key_var The name of your env variable corresponding to your minio secret key
+     */
     MongoBackup.prototype.setMinioSecretKeyVar = function (key_var) {
         this.MinioSecretKey = process.env[key_var];
     };
+    /**
+     * set the name of the ENV variable corresponding to the name of your minio bucket
+     * @param bucket_var The name of your env variable corresponding to the name of your Minio bucket
+     */
     MongoBackup.prototype.setMinioBucketVar = function (bucket_var) {
         this.MinioBucket = process.env[bucket_var];
     };
+    /**
+     * set the name of the ENV variable corresponding to your Minio port
+     * @param port_var The name of your env variable corresponding to your minio port
+     */
     MongoBackup.prototype.setMinioPortVar = function (port_var) {
         this.MinioPort = +process.env[port_var];
     };
+    /**
+     * set the name of the ENV variable corresponding to the ZIP you want to back up
+     * @param name_var The name of your env variable corresponding to the ZIP you want to back up
+     */
     MongoBackup.prototype.setZipNameVar = function (name_var) {
         this.ZipName = process.env[name_var];
     };
+    /**
+     * set the name of the ENV variable corresponding to the root path you want to back up to
+     * i.e. /base/path/
+     * @param root_var The name of your env variable corresponding to the root path you want to back up to.
+     */
     MongoBackup.prototype.setMinioRootPathVar = function (root_var) {
         this.MinioRootPath = process.env[root_var];
     };
+    /**
+     * set the name of the ENV variable corresponding to whether you connect to your DB using ssl
+     * @param ssl_var The name of your env variable corresponding to whether you connect to your DB using ssl
+     */
     MongoBackup.prototype.setMongoSSLVar = function (ssl_var) {
         this.MongoSSL = process.env[ssl_var] === 'true';
     };
+    /**
+     * set the name of the ENV variable corresponding to whether you connect to minio using ssl
+     * @param ssl_var The name of your env variable corresponding to whether you connect to minio using ssl
+     */
     MongoBackup.prototype.setMinioSSLVar = function (ssl_var) {
         this.MinioSSL = process.env[ssl_var] === 'true';
     };
+    /**
+     * set the name of the ENV variable corresponding to the webhook url used for slack notifications
+     * @param web_var The name of your env variable corresponding to the webhook url used for slack notifications
+     */
     MongoBackup.prototype.setWebhookURLVar = function (web_var) {
         this.WebhookURL = process.env[web_var];
     };

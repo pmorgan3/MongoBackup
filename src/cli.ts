@@ -26,11 +26,11 @@ let arg = yargs.options({
     },
     'mongo-user': {
         describe: 'The username associated with the database',
-        demandOption: true,
+        demandOption: false,
         type: 'string'
     }, 'mongo-pass': {
         describe: 'The password used for the mongodb',
-        demandOption: true,
+        demandOption: false,
         type: 'string'
     },
     'minio-endpoint':{

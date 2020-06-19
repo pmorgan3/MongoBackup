@@ -9,8 +9,8 @@ export class MongoBackup {
     Database: string
     MongoHost: string 
     MongoPort?: string
-    MongoUser: string
-    MongoPass: string
+    MongoUser?: string
+    MongoPass?: string
     MinioEndpoint: string
     MinioSecretKey: string
     MinioAccessKey: string
@@ -73,7 +73,7 @@ export class MongoBackup {
    } 
    public createBackup(verbose?: boolean) {
     // Call MongoDump
-    const exec_string = `mongodump --host ${this.MongoHost} --port ${this.MongoPort} --forceTableScan -vvvv --username ${this.MongoUser} --password ${this.MongoPass} --db ${this.Database} --authenticationDatabase admin --out ${this.OutputName} ${this.MongoSSL ? '--ssl' : ''}`
+    const exec_string = `mongodump --host ${this.MongoHost} --port ${this.MongoPort} --forceTableScan -vvvv ${this.MongoUser ? `--username ${this.MongoUser}` : ''} ${this.MongoPass ? `--password ${this.MongoPass}` : ''} --db ${this.Database} --authenticationDatabase admin --out ${this.OutputName} ${this.MongoSSL ? '--ssl' : ''}`
 
     if(verbose){
         console.log(`Now executing mongodump.`)
