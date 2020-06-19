@@ -1,5 +1,5 @@
 {
-  "name": "@webitects/mongo-backup-minio",
+  "name": "mongo-backup-minio",
   "version": "1.0.6",
   "description": "mongo-backup rewritten in NodeJS",
   "author": "Paul Morgan III",

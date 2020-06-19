@@ -2,8 +2,8 @@ export interface MongoBackupConfig {
     Database: string;
     MongoHost: string;
     MongoPort: string;
-    MongoUser: string;
-    MongoPass: string;
+    MongoUser?: string;
+    MongoPass?: string;
     MinioEndpoint: string;
     MinioAccessKey: string;
     MinioSecretKey: string;

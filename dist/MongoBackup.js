@@ -89,7 +89,7 @@ var MongoBackup = /** @class */ (function () {
     };
     MongoBackup.prototype.createBackup = function (verbose) {
         // Call MongoDump
-        var exec_string = "mongodump --host " + this.MongoHost + " --port " + this.MongoPort + " --forceTableScan -vvvv --username " + this.MongoUser + " --password " + this.MongoPass + " --db " + this.Database + " --authenticationDatabase admin --out " + this.OutputName + " " + (this.MongoSSL ? '--ssl' : '');
+        var exec_string = "mongodump --host " + this.MongoHost + " --port " + this.MongoPort + " --forceTableScan -vvvv " + (this.MongoUser ? "--username " + this.MongoUser : '') + " " + (this.MongoPass ? "--password " + this.MongoPass : '') + " --db " + this.Database + " --authenticationDatabase admin --out " + this.OutputName + " " + (this.MongoSSL ? '--ssl' : '');
         if (verbose) {
             console.log("Now executing mongodump.");
             console.log("Full exec string: " + exec_string);

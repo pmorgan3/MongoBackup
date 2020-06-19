@@ -4,8 +4,8 @@ export declare class MongoBackup {
     Database: string;
     MongoHost: string;
     MongoPort?: string;
-    MongoUser: string;
-    MongoPass: string;
+    MongoUser?: string;
+    MongoPass?: string;
     MinioEndpoint: string;
     MinioSecretKey: string;
     MinioAccessKey: string;
