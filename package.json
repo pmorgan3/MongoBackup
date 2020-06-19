@@ -1,6 +1,6 @@
 {
   "name": "@webitects/mongo-backup-minio",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "mongo-backup rewritten in NodeJS",
   "author": "Paul Morgan III",
   "main": "dist/index.js",
