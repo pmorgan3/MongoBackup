@@ -129,48 +129,110 @@ export class MongoBackup {
 
 
    // Change the names of the env variables
+
+   /**
+    * set the name of the ENV variable corresponding to your DB name
+    * @param db_var The name of your env variable corresponding to the name of your DB
+    */
    public setDatabaseVar(db_var: string){
        this.Database = process.env[db_var]
    }
+   /**
+    * set the name of the ENV variable corresponding to your DB host
+    * @param host_var The name of your env variable corresponding to your DB host
+    */
    public setMongoHostVar(host_var: string){
        this.MongoHost = process.env[host_var]
    }
+   /**
+    * set the name of the ENV variable corresponding to your DB port
+    * @param port_var The name of your env variable corresponding to the port of your DB
+    */
    public setMongoPortVar(port_var: string){
        this.MongoPort = process.env[port_var]
    }
+    /**
+    * set the name of the ENV variable corresponding to your DB user
+    * @param user_var The name of your env variable corresponding to your DB user
+    */
    public setMongoUserVar(user_var: string){
        this.MongoUser = process.env[user_var]
    }
+   /**
+    * set the name of the ENV variable corresponding to your DB password
+    * @param pass_var The name of your env variable corresponding to the password of your DB user
+    */
    public setMongoPassVar(pass_var: string){
        this.MongoPass = process.env[pass_var]
    }
+   /**
+    * set the name of the ENV variable corresponding to your minio endpoint
+    * @param end_var The name of your env variable corresponding to your minio endpoint
+    */
    public setMinioEndpointVar(end_var: string){
        this.MinioEndpoint = process.env[end_var]
    }
+   /**
+    * set the name of the ENV variable corresponding to your minio access key
+    * @param key_var The name of your env variable corresponding to your minio access key
+    */
    public setMinioAccessKeyVar(key_var: string){
        this.MinioAccessKey = process.env[key_var]
    }
+   /**
+    * set the name of the ENV variable corresponding to your minio secret key
+    * @param key_var The name of your env variable corresponding to your minio secret key
+    */
    public setMinioSecretKeyVar(key_var: string){
        this.MinioSecretKey = process.env[key_var]
    }
+   /**
+    * set the name of the ENV variable corresponding to the name of your minio bucket
+    * @param bucket_var The name of your env variable corresponding to the name of your Minio bucket
+    */
    public setMinioBucketVar(bucket_var: string){
        this.MinioBucket = process.env[bucket_var]
    }
+   /**
+    * set the name of the ENV variable corresponding to your Minio port
+    * @param port_var The name of your env variable corresponding to your minio port
+    */
    public setMinioPortVar(port_var: string){
        this.MinioPort = +process.env[port_var]
    }
+   /**
+    * set the name of the ENV variable corresponding to the ZIP you want to back up
+    * @param name_var The name of your env variable corresponding to the ZIP you want to back up
+    */
    public setZipNameVar(name_var: string){
        this.ZipName = process.env[name_var]
    }
+   /**
+    * set the name of the ENV variable corresponding to the root path you want to back up to
+    * i.e. /base/path/
+    * @param root_var The name of your env variable corresponding to the root path you want to back up to.
+    */
    public setMinioRootPathVar(root_var: string){
        this.MinioRootPath = process.env[root_var]
    }
+   /**
+    * set the name of the ENV variable corresponding to whether you connect to your DB using ssl
+    * @param ssl_var The name of your env variable corresponding to whether you connect to your DB using ssl
+    */
    public setMongoSSLVar(ssl_var: string){
        this.MongoSSL = process.env[ssl_var]==='true'
    }
+   /**
+    * set the name of the ENV variable corresponding to whether you connect to minio using ssl
+    * @param ssl_var The name of your env variable corresponding to whether you connect to minio using ssl
+    */
    public setMinioSSLVar(ssl_var: string){
        this.MinioSSL = process.env[ssl_var]==='true'
    }
+   /**
+    * set the name of the ENV variable corresponding to the webhook url used for slack notifications
+    * @param web_var The name of your env variable corresponding to the webhook url used for slack notifications
+    */
    public setWebhookURLVar(web_var: string){
        this.WebhookURL = process.env[web_var]
    }
