@@ -11,7 +11,6 @@ services:
             - MONGO_PORT=27017
             - MONGO_USER=mongouser
             - MONGO_PASSWORD=password
-            - MINIO_ENDPOINT=172.18.0.2
             - MINIO_PORT=9000
             - MINIO_ACCESS=accesskey
             - MINIO_SECRET=secretkey
@@ -19,7 +18,8 @@ services:
             - MINIO_ROOT_PATH=testpath/supertest/
             - MONGO_SSL=false
             - MINIO_SSL=false
-            - SLACK_WEBHOOK_URL=https://hooks.slack.com/services/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
+            - MINIO_ENDPOINT
+            - SLACK_WEBHOOK_URL
         volumes:
             - ./config:/config
         depends_on:
