@@ -1,6 +1,6 @@
 {
   "name": "mongo-backup-minio",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "mongo-backup rewritten in NodeJS",
   "author": "Paul Morgan III",
   "main": "dist/index.js",
