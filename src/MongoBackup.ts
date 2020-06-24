@@ -73,7 +73,9 @@ export class MongoBackup {
    } 
    public createBackup(verbose?: boolean) {
     // Call MongoDump
-    const exec_string = `mongodump --host ${this.MongoHost} --port ${this.MongoPort} --forceTableScan -vvvv ${this.MongoUser ? `--username ${this.MongoUser}` : ''} ${this.MongoPass ? `--password ${this.MongoPass}` : ''} --db ${this.Database} --authenticationDatabase admin --out ${this.OutputName} ${this.MongoSSL ? '--ssl' : ''}`
+    const use_mongo_pass = this.MongoPass === undefined ? `` : `--password ${this.MongoPass}`
+    const use_mongo_user = this.MongoUser === undefined ? `` : `--username ${this.MongoUser}`
+    const exec_string = `mongodump --host ${this.MongoHost} --port ${this.MongoPort} --forceTableScan -vvvv ${use_mongo_user} ${use_mongo_pass} --db ${this.Database} --authenticationDatabase admin --out ${this.OutputName} ${this.MongoSSL ? '--ssl' : ''}`
 
     if(verbose){
         console.log(`Now executing mongodump.`)
